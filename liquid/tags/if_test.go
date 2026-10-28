@@ -1,6 +1,7 @@
 package tags
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/Notifuse/liquidgo/liquid"
@@ -36,11 +37,11 @@ func TestIfTagSimpleCondition(t *testing.T) {
 	}
 
 	ctx := liquid.NewContext()
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
-	if output != "content " {
-		t.Errorf("Expected output 'content ', got %q", output)
+	if output.String() != "content " {
+		t.Errorf("Expected output.String() 'content ', got %q", output.String())
 	}
 }
 
@@ -59,11 +60,11 @@ func TestIfTagFalseCondition(t *testing.T) {
 	}
 
 	ctx := liquid.NewContext()
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
-	if output != "" {
-		t.Errorf("Expected empty output, got %q", output)
+	if output.String() != "" {
+		t.Errorf("Expected empty output.String(), got %q", output.String())
 	}
 }
 
@@ -86,11 +87,11 @@ func TestIfTagWithElse(t *testing.T) {
 	}
 
 	ctx := liquid.NewContext()
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
-	if output != " else content " {
-		t.Errorf("Expected output ' else content ', got %q", output)
+	if output.String() != " else content " {
+		t.Errorf("Expected output.String() ' else content ', got %q", output.String())
 	}
 }
 
@@ -113,11 +114,11 @@ func TestIfTagWithElsif(t *testing.T) {
 	}
 
 	ctx := liquid.NewContext()
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
-	if output != "elsif" {
-		t.Errorf("Expected output 'elsif', got %q", output)
+	if output.String() != "elsif" {
+		t.Errorf("Expected output.String() 'elsif', got %q", output.String())
 	}
 }
 
@@ -240,12 +241,12 @@ func TestIfTagRenderToOutputBuffer(t *testing.T) {
 	}
 
 	ctx := liquid.NewContext()
-	var output string
+	var output strings.Builder
 
 	// Test with true condition
 	tag.RenderToOutputBuffer(ctx, &output)
-	if output != "content " {
-		t.Errorf("Expected 'content ', got %q", output)
+	if output.String() != "content " {
+		t.Errorf("Expected 'content ', got %q", output.String())
 	}
 
 	// Test with false condition and else
@@ -254,10 +255,10 @@ func TestIfTagRenderToOutputBuffer(t *testing.T) {
 	if err := tag2.Parse(tokenizer2); err != nil {
 		t.Fatalf("tag2.Parse() error = %v", err)
 	}
-	output2 := ""
+	var output2 strings.Builder
 	tag2.RenderToOutputBuffer(ctx, &output2)
-	if output2 != "else content " {
-		t.Errorf("Expected 'else content ', got %q", output2)
+	if output2.String() != "else content " {
+		t.Errorf("Expected 'else content ', got %q", output2.String())
 	}
 
 	// Test with error in evaluation
@@ -266,12 +267,12 @@ func TestIfTagRenderToOutputBuffer(t *testing.T) {
 	if err := tag3.Parse(tokenizer3); err != nil {
 		t.Fatalf("tag3.Parse() error = %v", err)
 	}
-	output3 := ""
+	var output3 strings.Builder
 	ctx3 := liquid.NewContext()
 	// Set var to something that causes error
 	tag3.RenderToOutputBuffer(ctx3, &output3)
 	// Should handle error gracefully
-	_ = output3
+	_ = output3.String()
 }
 
 func TestIfTagParseIfCondition(t *testing.T) {
@@ -597,12 +598,12 @@ func TestIfTagRenderToOutputBufferEvaluateError(t *testing.T) {
 	}
 
 	ctx := liquid.NewContext()
-	var output string
+	var output strings.Builder
 
 	// Render - if var doesn't exist, Evaluate might return error
 	tag.RenderToOutputBuffer(ctx, &output)
 	// Should handle error gracefully
-	_ = output
+	_ = output.String()
 }
 
 // Test RenderToOutputBuffer with false condition
@@ -621,11 +622,11 @@ func TestIfTagRenderToOutputBufferFalseCondition(t *testing.T) {
 	}
 
 	ctx := liquid.NewContext()
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 	// Should not render anything for false condition
-	if output != "" {
-		t.Errorf("Expected empty output for false condition, got %q", output)
+	if output.String() != "" {
+		t.Errorf("Expected empty output.String() for false condition, got %q", output.String())
 	}
 }
 
@@ -645,11 +646,11 @@ func TestIfTagRenderToOutputBufferEmptyStringCondition(t *testing.T) {
 	}
 
 	ctx := liquid.NewContext()
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 	// Empty string should be falsy
-	if output != "" {
-		t.Errorf("Expected empty output for empty string condition, got %q", output)
+	if output.String() != "" {
+		t.Errorf("Expected empty output.String() for empty string condition, got %q", output.String())
 	}
 }
 
@@ -669,11 +670,11 @@ func TestIfTagRenderToOutputBufferNilCondition(t *testing.T) {
 	}
 
 	ctx := liquid.NewContext()
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 	// Nil should be falsy
-	if output != "" {
-		t.Errorf("Expected empty output for nil condition, got %q", output)
+	if output.String() != "" {
+		t.Errorf("Expected empty output.String() for nil condition, got %q", output.String())
 	}
 }
 
@@ -691,10 +692,10 @@ func TestIfTagRenderToOutputBufferNonBlockBodyAttachment(t *testing.T) {
 	tag.blocks = []ConditionBlock{condition}
 
 	ctx := liquid.NewContext()
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 	// Should handle gracefully - attachment won't render but no error
-	_ = output
+	_ = output.String()
 }
 
 // Test NewIfTag with error in parseIfCondition
@@ -754,10 +755,10 @@ func TestIfTagParseWithMultipleElsif(t *testing.T) {
 	}
 
 	ctx := liquid.NewContext()
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
-	if output != "elsif2" {
-		t.Errorf("Expected output 'elsif2', got %q", output)
+	if output.String() != "elsif2" {
+		t.Errorf("Expected output.String() 'elsif2', got %q", output.String())
 	}
 }
 
@@ -777,12 +778,12 @@ func TestIfTagMultipleElsif(t *testing.T) {
 	}
 
 	ctx := liquid.NewContext()
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Should render first elsif block that evaluates to true
-	if output != "elsif1 content " {
-		t.Logf("Note: output is %q (may render first matching elsif)", output)
+	if output.String() != "elsif1 content " {
+		t.Logf("Note: output.String() is %q (may render first matching elsif)", output.String())
 	}
 }
 
@@ -811,13 +812,13 @@ func TestIfTagComplexNestedConditions(t *testing.T) {
 	}
 
 	ctx := liquid.NewContext()
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Should render outer content but not inner
 	expected := "outer  outer end "
-	if output != expected {
-		t.Errorf("Expected %q, got %q", expected, output)
+	if output.String() != expected {
+		t.Errorf("Expected %q, got %q", expected, output.String())
 	}
 }
 
@@ -841,11 +842,11 @@ func TestIfTagWithOrCondition(t *testing.T) {
 	ctx.Set("a", false)
 	ctx.Set("b", true)
 
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
-	if output != "YES " {
-		t.Errorf("Expected 'YES ', got %q", output)
+	if output.String() != "YES " {
+		t.Errorf("Expected 'YES ', got %q", output.String())
 	}
 }
 
@@ -869,11 +870,11 @@ func TestIfTagWithAndCondition(t *testing.T) {
 	ctx.Set("a", true)
 	ctx.Set("b", true)
 
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
-	if output != "YES " {
-		t.Errorf("Expected 'YES ', got %q", output)
+	if output.String() != "YES " {
+		t.Errorf("Expected 'YES ', got %q", output.String())
 	}
 
 	// Test: a and b (a=true, b=false) should be false
@@ -885,11 +886,11 @@ func TestIfTagWithAndCondition(t *testing.T) {
 	ctx2.Set("a", true)
 	ctx2.Set("b", false)
 
-	var output2 string
+	var output2 strings.Builder
 	tag2.RenderToOutputBuffer(ctx2, &output2)
 
-	if output2 != "" {
-		t.Errorf("Expected empty output, got %q", output2)
+	if output2.String() != "" {
+		t.Errorf("Expected empty output.String(), got %q", output2.String())
 	}
 }
 
@@ -913,10 +914,10 @@ func TestIfTagWithComplexCondition(t *testing.T) {
 	ctx.Set("a", 0)
 	ctx.Set("b", 2)
 
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
-	if output != "YES " {
-		t.Errorf("Expected 'YES ', got %q", output)
+	if output.String() != "YES " {
+		t.Errorf("Expected 'YES ', got %q", output.String())
 	}
 }

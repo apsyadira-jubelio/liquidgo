@@ -421,13 +421,13 @@ func (bb *BlockBody) Blank() bool {
 
 // Render renders the block body.
 func (bb *BlockBody) Render(context TagContext) string {
-	output := ""
+	var output strings.Builder
 	bb.RenderToOutputBuffer(context, &output)
-	return output
+	return output.String()
 }
 
 // RenderToOutputBuffer renders the block body to the output buffer.
-func (bb *BlockBody) RenderToOutputBuffer(context TagContext, output *string) {
+func (bb *BlockBody) RenderToOutputBuffer(context TagContext, output *strings.Builder) {
 	ctx, hasProfiler := context.(*Context)
 	profiler := hasProfiler && ctx.Profiler() != nil
 
@@ -444,7 +444,7 @@ func (bb *BlockBody) RenderToOutputBuffer(context TagContext, output *string) {
 		switch n := node.(type) {
 		case string:
 			// Raw strings are not profiled
-			*output += n
+			output.WriteString(n)
 
 		case *Variable:
 			// Handle variables
@@ -477,7 +477,7 @@ func (bb *BlockBody) RenderToOutputBuffer(context TagContext, output *string) {
 		if ctx != nil {
 			rl := ctx.ResourceLimits()
 			if rl != nil {
-				rl.IncrementWriteScore(*output)
+				rl.IncrementWriteScore(output.String())
 			}
 		}
 	}
@@ -486,7 +486,7 @@ func (bb *BlockBody) RenderToOutputBuffer(context TagContext, output *string) {
 // renderNodeOptimized handles rendering of non-string, non-variable nodes with minimal reflection.
 // Optimization: This reduces reflection usage by 90% compared to the old implementation.
 // Uses method override detection to handle tags that only override Render() vs RenderToOutputBuffer().
-func (bb *BlockBody) renderNodeOptimized(node interface{}, context TagContext, output *string, profiler bool, ctx *Context) {
+func (bb *BlockBody) renderNodeOptimized(node interface{}, context TagContext, output *strings.Builder, profiler bool, ctx *Context) {
 	// Get metadata for profiling if needed
 	var code string
 	var lineNumber *int
@@ -502,7 +502,7 @@ func (bb *BlockBody) renderNodeOptimized(node interface{}, context TagContext, o
 
 	// Check if node implements RenderToOutputBuffer
 	type Renderable interface {
-		RenderToOutputBuffer(TagContext, *string)
+		RenderToOutputBuffer(TagContext, *strings.Builder)
 	}
 
 	if renderable, ok := node.(Renderable); ok {
@@ -589,10 +589,10 @@ func (bb *BlockBody) renderNodeOptimized(node interface{}, context TagContext, o
 						if renderResult != "" {
 							if profiler {
 								ctx.Profiler().ProfileNode(ctx.TemplateName(), code, lineNumber, func() {
-									*output += renderResult
+									output.WriteString(renderResult)
 								})
 							} else {
-								*output += renderResult
+								output.WriteString(renderResult)
 							}
 							return
 						}

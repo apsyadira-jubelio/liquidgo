@@ -1,6 +1,8 @@
 package tags
 
 import (
+	"strings"
+
 	"github.com/Notifuse/liquidgo/liquid"
 )
 
@@ -19,10 +21,11 @@ func NewIfchangedTag(tagName, markup string, parseContext liquid.ParseContextInt
 
 // RenderToOutputBuffer renders the ifchanged tag.
 // Only renders if the block output is different from the last rendered output.
-func (i *IfchangedTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+func (i *IfchangedTag) RenderToOutputBuffer(context liquid.TagContext, output *strings.Builder) {
 	// Render block body to temporary buffer
-	blockOutput := ""
-	i.Block.RenderToOutputBuffer(context, &blockOutput)
+	var blockBuf strings.Builder
+	i.Block.RenderToOutputBuffer(context, &blockBuf)
+	blockOutput := blockBuf.String()
 
 	// Get registers
 	registers := context.Registers()
@@ -38,6 +41,6 @@ func (i *IfchangedTag) RenderToOutputBuffer(context liquid.TagContext, output *s
 	// Only output if different from last output
 	if blockOutput != lastOutput {
 		registers.Set("ifchanged", blockOutput)
-		*output += blockOutput
+		output.WriteString(blockOutput)
 	}
 }

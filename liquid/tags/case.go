@@ -260,7 +260,7 @@ func (c *CaseTag) recordElseCondition(markup string) error {
 }
 
 // RenderToOutputBuffer renders the case tag.
-func (c *CaseTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+func (c *CaseTag) RenderToOutputBuffer(context liquid.TagContext, output *strings.Builder) {
 	ctx := context.Context().(*liquid.Context)
 	executeElseBlock := true
 
@@ -277,7 +277,7 @@ func (c *CaseTag) RenderToOutputBuffer(context liquid.TagContext, output *string
 		result, err := block.Evaluate(ctx)
 		if err != nil {
 			errorMsg := context.HandleError(err, nil)
-			*output += errorMsg
+			output.WriteString(errorMsg)
 			return
 		}
 

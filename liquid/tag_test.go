@@ -1,6 +1,7 @@
 package liquid
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -146,19 +147,19 @@ func TestTagRenderToOutputBuffer(t *testing.T) {
 
 	tag := NewTag("test", "", pc)
 	ctx := NewContext()
-	output := ""
+	var output strings.Builder
 
 	// Test with empty render result
 	tag.RenderToOutputBuffer(ctx, &output)
-	if output != "" {
-		t.Errorf("Expected empty output, got %q", output)
+	if output.String() != "" {
+		t.Errorf("Expected empty output.String(), got %q", output.String())
 	}
 
 	// Test with non-empty render result (Tag.Render returns empty, so this tests the path)
-	// Since Tag.Render always returns empty, output should remain empty
+	// Since Tag.Render always returns empty, output.String() should remain empty
 	tag.RenderToOutputBuffer(ctx, &output)
-	if output != "" {
-		t.Errorf("Expected empty output, got %q", output)
+	if output.String() != "" {
+		t.Errorf("Expected empty output.String(), got %q", output.String())
 	}
 }
 

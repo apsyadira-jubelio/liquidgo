@@ -26,7 +26,7 @@ func (i *IncrementTag) VariableName() string {
 }
 
 // RenderToOutputBuffer renders the increment tag.
-func (i *IncrementTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+func (i *IncrementTag) RenderToOutputBuffer(context liquid.TagContext, output *strings.Builder) {
 	// Get counter environment (first environment)
 	ctx := context.Context().(*liquid.Context)
 	environments := ctx.Scopes()
@@ -52,6 +52,6 @@ func (i *IncrementTag) RenderToOutputBuffer(context liquid.TagContext, output *s
 	}
 
 	// Output current value, then increment
-	*output += liquid.ToS(intValue, nil)
+	output.WriteString(liquid.ToS(intValue, nil))
 	counterEnv[i.variableName] = intValue + 1
 }

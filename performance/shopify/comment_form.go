@@ -3,6 +3,7 @@ package shopify
 import (
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/Notifuse/liquidgo/liquid"
 )
@@ -33,7 +34,7 @@ func NewCommentForm(tagName, markup string, parseContext liquid.ParseContextInte
 }
 
 // RenderToOutputBuffer renders the comment_form tag
-func (c *CommentForm) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+func (c *CommentForm) RenderToOutputBuffer(context liquid.TagContext, output *strings.Builder) {
 	ctx := context.Context().(*liquid.Context)
 	article := ctx.FindVariable(c.variableName, false)
 
@@ -69,5 +70,5 @@ func (c *CommentForm) RenderToOutputBuffer(context liquid.TagContext, output *st
 %s
 </form>`, articleID, bodyOutput)
 
-	*output += formHTML
+	output.WriteString(formHTML)
 }

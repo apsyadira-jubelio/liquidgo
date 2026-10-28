@@ -1,6 +1,7 @@
 package tags
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/Notifuse/liquidgo/liquid"
@@ -18,19 +19,19 @@ func TestIncrementTag(t *testing.T) {
 	}
 
 	ctx := liquid.NewContext()
-	var output string
+	var output strings.Builder
 
-	// First call should output 0
+	// First call should output.String() 0
 	tag.RenderToOutputBuffer(ctx, &output)
-	if output != "0" {
-		t.Errorf("Expected '0', got %q", output)
+	if output.String() != "0" {
+		t.Errorf("Expected '0', got %q", output.String())
 	}
 
-	// Second call should output 1
-	output = ""
+	// Second call should output.String() 1
+	output.Reset()
 	tag.RenderToOutputBuffer(ctx, &output)
-	if output != "1" {
-		t.Errorf("Expected '1', got %q", output)
+	if output.String() != "1" {
+		t.Errorf("Expected '1', got %q", output.String())
 	}
 }
 
@@ -43,21 +44,21 @@ func TestIncrementTagRenderToOutputBufferEdgeCases(t *testing.T) {
 
 	// Test with empty scopes (should initialize)
 	ctx.Scopes() // Ensure scopes exist
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
-	// Should output 0 on first call
-	if output != "0" {
-		t.Errorf("Expected '0' on first call, got %q", output)
+	// Should output.String() 0 on first call
+	if output.String() != "0" {
+		t.Errorf("Expected '0' on first call, got %q", output.String())
 	}
 
 	// Test multiple increments
 	for i := 1; i <= 5; i++ {
-		output = ""
+		output.Reset()
 		tag.RenderToOutputBuffer(ctx, &output)
 		expected := liquid.ToS(i, nil)
-		if output != expected {
-			t.Errorf("Expected %q on call %d, got %q", expected, i+1, output)
+		if output.String() != expected {
+			t.Errorf("Expected %q on call %d, got %q", expected, i+1, output.String())
 		}
 	}
 }

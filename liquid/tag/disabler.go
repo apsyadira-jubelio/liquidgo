@@ -1,6 +1,8 @@
 package tag
 
 import (
+	"strings"
+
 	"github.com/Notifuse/liquidgo/liquid"
 )
 
@@ -13,7 +15,7 @@ type Disabler struct{}
 func (d *Disabler) RenderToOutputBuffer(
 	disabledTags []string,
 	context liquid.TagContext,
-	output *string,
+	output *strings.Builder,
 	renderFn func(),
 ) {
 	context.WithDisabledTags(disabledTags, func() {

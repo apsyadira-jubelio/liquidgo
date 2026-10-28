@@ -1,6 +1,7 @@
 package liquid
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -80,10 +81,10 @@ func TestDocumentRenderToOutputBuffer(t *testing.T) {
 	}
 
 	ctx := NewContext()
-	var output string
+	var output strings.Builder
 	doc.RenderToOutputBuffer(ctx, &output)
-	if output != "Test" {
-		t.Errorf("Expected 'Test', got %q", output)
+	if output.String() != "Test" {
+		t.Errorf("Expected 'Test', got %q", output.String())
 	}
 }
 

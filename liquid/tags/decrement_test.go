@@ -1,6 +1,7 @@
 package tags
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/Notifuse/liquidgo/liquid"
@@ -18,19 +19,19 @@ func TestDecrementTag(t *testing.T) {
 	}
 
 	ctx := liquid.NewContext()
-	var output string
+	var output strings.Builder
 
-	// First call should output -1
+	// First call should output.String() -1
 	tag.RenderToOutputBuffer(ctx, &output)
-	if output != "-1" {
-		t.Errorf("Expected '-1', got %q", output)
+	if output.String() != "-1" {
+		t.Errorf("Expected '-1', got %q", output.String())
 	}
 
-	// Second call should output -2
-	output = ""
+	// Second call should output.String() -2
+	output.Reset()
 	tag.RenderToOutputBuffer(ctx, &output)
-	if output != "-2" {
-		t.Errorf("Expected '-2', got %q", output)
+	if output.String() != "-2" {
+		t.Errorf("Expected '-2', got %q", output.String())
 	}
 }
 
@@ -43,21 +44,21 @@ func TestDecrementTagRenderToOutputBufferEdgeCases(t *testing.T) {
 
 	// Test with empty scopes (should initialize)
 	ctx.Scopes() // Ensure scopes exist
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
-	// Should output -1 on first call
-	if output != "-1" {
-		t.Errorf("Expected '-1' on first call, got %q", output)
+	// Should output.String() -1 on first call
+	if output.String() != "-1" {
+		t.Errorf("Expected '-1' on first call, got %q", output.String())
 	}
 
 	// Test multiple decrements
 	for i := 2; i <= 5; i++ {
-		output = ""
+		output.Reset()
 		tag.RenderToOutputBuffer(ctx, &output)
 		expected := liquid.ToS(-i, nil)
-		if output != expected {
-			t.Errorf("Expected %q on call %d, got %q", expected, i, output)
+		if output.String() != expected {
+			t.Errorf("Expected %q on call %d, got %q", expected, i, output.String())
 		}
 	}
 }

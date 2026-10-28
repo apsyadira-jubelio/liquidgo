@@ -28,12 +28,12 @@ func TestRawTag(t *testing.T) {
 	}
 
 	ctx := liquid.NewContext()
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
-	// Raw tag should output the content as-is (without the endraw tag)
-	if !strings.Contains(output, "Hello") {
-		t.Errorf("Expected output to contain 'Hello', got %q", output)
+	// Raw tag should output.String() the content as-is (without the endraw tag)
+	if !strings.Contains(output.String(), "Hello") {
+		t.Errorf("Expected output.String() to contain 'Hello', got %q", output.String())
 	}
 }
 

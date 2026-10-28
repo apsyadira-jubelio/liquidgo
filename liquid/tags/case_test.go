@@ -1,6 +1,7 @@
 package tags
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/Notifuse/liquidgo/liquid"
@@ -37,11 +38,11 @@ func TestCaseTagWithWhen(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	ctx.Set("var", 1)
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
-	if output != "one" {
-		t.Errorf("Expected output 'one', got %q", output)
+	if output.String() != "one" {
+		t.Errorf("Expected output.String() 'one', got %q", output.String())
 	}
 }
 
@@ -65,12 +66,12 @@ func TestCaseTagWithWhenAndElse(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	ctx.Set("var", 2)
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Should render else block
-	if output != "other" {
-		t.Errorf("Expected output 'other', got %q", output)
+	if output.String() != "other" {
+		t.Errorf("Expected output.String() 'other', got %q", output.String())
 	}
 }
 
@@ -94,11 +95,11 @@ func TestCaseTagWithMultipleWhen(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	ctx.Set("var", 2)
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
-	if output != "two" {
-		t.Errorf("Expected output 'two', got %q", output)
+	if output.String() != "two" {
+		t.Errorf("Expected output.String() 'two', got %q", output.String())
 	}
 }
 
@@ -320,29 +321,29 @@ func TestCaseTagRenderToOutputBuffer(t *testing.T) {
 	}
 
 	ctx := liquid.NewContext()
-	var output string
+	var output strings.Builder
 
 	// Test with matching when condition
 	ctx.Set("var", 1)
 	tag.RenderToOutputBuffer(ctx, &output)
-	if output != "one" {
-		t.Errorf("Expected 'one', got %q", output)
+	if output.String() != "one" {
+		t.Errorf("Expected 'one', got %q", output.String())
 	}
 
 	// Test with else condition
-	output = ""
+	output.Reset()
 	ctx.Set("var", 2)
 	tag.RenderToOutputBuffer(ctx, &output)
-	if output != "other" {
-		t.Errorf("Expected 'other', got %q", output)
+	if output.String() != "other" {
+		t.Errorf("Expected 'other', got %q", output.String())
 	}
 
 	// Test with error in evaluation
-	output = ""
+	output.Reset()
 	ctx.Set("var", nil)
 	tag.RenderToOutputBuffer(ctx, &output)
 	// Should handle error gracefully
-	_ = output
+	_ = output.String()
 }
 
 func TestCaseTagParseMarkupError(t *testing.T) {
@@ -425,11 +426,11 @@ func TestCaseTagRenderToOutputBufferWithError(t *testing.T) {
 	// Set var to something that will cause evaluation issues
 	ctx.Set("var", func() {}) // Function that can't be evaluated properly
 
-	var output string
+	var output strings.Builder
 	// Should handle error gracefully
 	tag.RenderToOutputBuffer(ctx, &output)
 	// Output might contain error message or be empty
-	_ = output
+	_ = output.String()
 }
 
 func TestCaseTagRenderToOutputBufferNoMatchingWhen(t *testing.T) {
@@ -449,11 +450,11 @@ func TestCaseTagRenderToOutputBufferNoMatchingWhen(t *testing.T) {
 	ctx := liquid.NewContext()
 	ctx.Set("var", 999) // Value that doesn't match any when
 
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 	// Should render nothing when no match and no else
-	if output != "" {
-		t.Errorf("Expected empty output for no match, got %q", output)
+	if output.String() != "" {
+		t.Errorf("Expected empty output.String() for no match, got %q", output.String())
 	}
 }
 
@@ -474,13 +475,13 @@ func TestCaseTagRenderToOutputBufferErrorHandling(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	ctx.Set("var", 1)
-	var output string
+	var output strings.Builder
 
 	// Should handle evaluation errors gracefully
 	tag.RenderToOutputBuffer(ctx, &output)
 
-	// May produce error message or empty output
-	t.Logf("Note: Case tag error handling output: %q", output)
+	// May produce error message or empty output.String()
+	t.Logf("Note: Case tag error handling output.String(): %q", output.String())
 }
 
 // TestCaseTagRenderToOutputBufferMultipleWhen tests multiple when blocks
@@ -500,12 +501,12 @@ func TestCaseTagRenderToOutputBufferMultipleWhen(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	ctx.Set("var", 2)
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Should render matching when block
-	if output != "two" {
-		t.Logf("Note: Multiple when blocks output: %q (expected 'two')", output)
+	if output.String() != "two" {
+		t.Logf("Note: Multiple when blocks output.String(): %q (expected 'two')", output.String())
 	}
 }
 
@@ -526,12 +527,12 @@ func TestCaseTagRenderToOutputBufferElseBlock(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	ctx.Set("var", 99) // Value that doesn't match when
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Should render else block
-	if output != "other" {
-		t.Errorf("Expected 'other', got %q", output)
+	if output.String() != "other" {
+		t.Errorf("Expected 'other', got %q", output.String())
 	}
 }
 

@@ -63,7 +63,7 @@ func (c *CaptureTag) To() string {
 // RenderToOutputBuffer renders the capture tag.
 // Following Ruby implementation: always uses resource_limits.with_capture,
 // renders the block body, and assigns to context.scopes.last
-func (c *CaptureTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+func (c *CaptureTag) RenderToOutputBuffer(context liquid.TagContext, output *strings.Builder) {
 	ctx := context.Context().(*liquid.Context)
 	rl := context.ResourceLimits()
 

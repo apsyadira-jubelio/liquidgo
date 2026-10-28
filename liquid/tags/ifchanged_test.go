@@ -1,6 +1,7 @@
 package tags
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/Notifuse/liquidgo/liquid"
@@ -32,12 +33,12 @@ func TestIfchangedTagRendersWhenChanged(t *testing.T) {
 	}
 
 	ctx := liquid.NewContext()
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
-	// First render should output content
-	if output != "content " {
-		t.Errorf("Expected output 'content ', got %q", output)
+	// First render should output.String() content
+	if output.String() != "content " {
+		t.Errorf("Expected output.String() 'content ', got %q", output.String())
 	}
 }
 
@@ -56,19 +57,19 @@ func TestIfchangedTagDoesNotRenderWhenUnchanged(t *testing.T) {
 	}
 
 	ctx := liquid.NewContext()
-	var output string
+	var output strings.Builder
 
 	// First render
 	tag.RenderToOutputBuffer(ctx, &output)
-	if output != "content " {
-		t.Errorf("Expected output 'content ', got %q", output)
+	if output.String() != "content " {
+		t.Errorf("Expected output.String() 'content ', got %q", output.String())
 	}
 
-	// Second render with same content should not output
-	output = ""
+	// Second render with same content should not output.String()
+	output.Reset()
 	tag.RenderToOutputBuffer(ctx, &output)
-	if output != "" {
-		t.Errorf("Expected empty output on second render, got %q", output)
+	if output.String() != "" {
+		t.Errorf("Expected empty output.String() on second render, got %q", output.String())
 	}
 }
 
@@ -87,26 +88,26 @@ func TestIfchangedTagRendersWhenContentChanges(t *testing.T) {
 	}
 
 	ctx := liquid.NewContext()
-	var output string
+	var output strings.Builder
 
 	// First render with item=1
 	ctx.Set("item", 1)
 	tag.RenderToOutputBuffer(ctx, &output)
-	if output != "1 " {
-		t.Errorf("Expected output '1 ', got %q", output)
+	if output.String() != "1 " {
+		t.Errorf("Expected output.String() '1 ', got %q", output.String())
 	}
 
-	// Second render with same item=1 should not output
-	output = ""
+	// Second render with same item=1 should not output.String()
+	output.Reset()
 	tag.RenderToOutputBuffer(ctx, &output)
-	if output != "" {
-		t.Errorf("Expected empty output, got %q", output)
+	if output.String() != "" {
+		t.Errorf("Expected empty output.String(), got %q", output.String())
 	}
 
-	// Third render with item=2 should output
+	// Third render with item=2 should output.String()
 	ctx.Set("item", 2)
 	tag.RenderToOutputBuffer(ctx, &output)
-	if output != "2 " {
-		t.Errorf("Expected output '2 ', got %q", output)
+	if output.String() != "2 " {
+		t.Errorf("Expected output.String() '2 ', got %q", output.String())
 	}
 }

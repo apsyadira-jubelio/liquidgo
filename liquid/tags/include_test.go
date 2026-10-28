@@ -79,12 +79,12 @@ func TestIncludeTagRenderToOutputBuffer(t *testing.T) {
 	}
 
 	ctx := liquid.NewContext()
-	var output string
+	var output strings.Builder
 	// RenderToOutputBuffer should handle missing template gracefully
 	tag.RenderToOutputBuffer(ctx, &output)
 	// Should handle missing template (error message or empty)
 	// Just verify no panic occurred
-	_ = output
+	_ = output.String()
 }
 
 func TestIncludeTagRenderToOutputBufferComprehensive(t *testing.T) {
@@ -94,10 +94,10 @@ func TestIncludeTagRenderToOutputBufferComprehensive(t *testing.T) {
 	// Test with non-string template name
 	tag2, _ := NewIncludeTag("include", "123", pc)
 	ctx2 := liquid.NewContext()
-	var output2 string
+	var output2 strings.Builder
 	tag2.RenderToOutputBuffer(ctx2, &output2)
 	// Should handle error gracefully
-	_ = output2
+	_ = output2.String()
 
 	// Test with with clause
 	tag3, err := NewIncludeTag("include", "'greeting' with person", pc)
@@ -106,9 +106,9 @@ func TestIncludeTagRenderToOutputBufferComprehensive(t *testing.T) {
 	}
 	ctx3 := liquid.NewContext()
 	ctx3.Set("person", map[string]interface{}{"name": "Alice"})
-	var output3 string
+	var output3 strings.Builder
 	tag3.RenderToOutputBuffer(ctx3, &output3)
-	_ = output3
+	_ = output3.String()
 
 	// Test with for clause
 	tag4, err := NewIncludeTag("include", "'greeting' for person", pc)
@@ -117,9 +117,9 @@ func TestIncludeTagRenderToOutputBufferComprehensive(t *testing.T) {
 	}
 	ctx4 := liquid.NewContext()
 	ctx4.Set("person", map[string]interface{}{"name": "Bob"})
-	var output4 string
+	var output4 strings.Builder
 	tag4.RenderToOutputBuffer(ctx4, &output4)
-	_ = output4
+	_ = output4.String()
 
 	// Test with as clause
 	tag5, err := NewIncludeTag("include", "'greeting' as greeting_var", pc)
@@ -128,9 +128,9 @@ func TestIncludeTagRenderToOutputBufferComprehensive(t *testing.T) {
 	}
 	ctx5 := liquid.NewContext()
 	ctx5.Set("name", "Charlie")
-	var output5 string
+	var output5 strings.Builder
 	tag5.RenderToOutputBuffer(ctx5, &output5)
-	_ = output5
+	_ = output5.String()
 
 	// Test with array variable
 	tag6, err := NewIncludeTag("include", "'greeting' for items", pc)
@@ -139,9 +139,9 @@ func TestIncludeTagRenderToOutputBufferComprehensive(t *testing.T) {
 	}
 	ctx6 := liquid.NewContext()
 	ctx6.Set("items", []interface{}{map[string]interface{}{"name": "Item1"}, map[string]interface{}{"name": "Item2"}})
-	var output6 string
+	var output6 strings.Builder
 	tag6.RenderToOutputBuffer(ctx6, &output6)
-	_ = output6
+	_ = output6.String()
 }
 
 func TestIncludeTagTemplateNameExpr(t *testing.T) {
@@ -192,13 +192,13 @@ func TestIncludeTagRenderToOutputBufferWithNestedPath(t *testing.T) {
 	}
 
 	ctx.Set("partial", "World")
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Should render the template (note: variable 'partial' set in parent, but template also defines 'partial' from path)
 	expected := "Hello from "
-	if output != expected {
-		t.Errorf("Expected %q, got %q", expected, output)
+	if output.String() != expected {
+		t.Errorf("Expected %q, got %q", expected, output.String())
 	}
 }
 
@@ -234,13 +234,13 @@ func TestIncludeTagRenderToOutputBufferWithVariableFromContext(t *testing.T) {
 
 	// Set variable with same name as template
 	ctx.Set("greeting", "World")
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Should render the template
 	expected := "Hello World"
-	if output != expected {
-		t.Errorf("Expected %q, got %q", expected, output)
+	if output.String() != expected {
+		t.Errorf("Expected %q, got %q", expected, output.String())
 	}
 }
 
@@ -276,13 +276,13 @@ func TestIncludeTagRenderToOutputBufferWithArrayVariable(t *testing.T) {
 
 	// Set array variable
 	ctx.Set("items", []interface{}{"one", "two", "three"})
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Should render template multiple times
 	expected := "Item: oneItem: twoItem: three"
-	if output != expected {
-		t.Errorf("Expected %q, got %q", expected, output)
+	if output.String() != expected {
+		t.Errorf("Expected %q, got %q", expected, output.String())
 	}
 }
 
@@ -316,13 +316,13 @@ func TestIncludeTagRenderToOutputBufferWithAttributes(t *testing.T) {
 		t.Fatalf("NewIncludeTag() error = %v", err)
 	}
 
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Should render the template with attributes
 	expected := "Hello Alice"
-	if output != expected {
-		t.Errorf("Expected %q, got %q", expected, output)
+	if output.String() != expected {
+		t.Errorf("Expected %q, got %q", expected, output.String())
 	}
 }
 
@@ -357,13 +357,13 @@ func TestIncludeTagRenderToOutputBufferWithAlias(t *testing.T) {
 	}
 
 	ctx.Set("user", "Bob")
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Should render the template with alias
 	expected := "Hello Bob"
-	if output != expected {
-		t.Errorf("Expected %q, got %q", expected, output)
+	if output.String() != expected {
+		t.Errorf("Expected %q, got %q", expected, output.String())
 	}
 }
 
@@ -379,12 +379,12 @@ func TestIncludeTagRenderToOutputBufferWithLocaleError(t *testing.T) {
 	}
 
 	ctx := liquid.NewContext()
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
-	// Should output error message (Liquid error format)
-	if !strings.Contains(output, "Liquid") && output == "" {
-		t.Errorf("Expected Liquid error message, got %q", output)
+	// Should output.String() error message (Liquid error format)
+	if !strings.Contains(output.String(), "Liquid") && output.String() == "" {
+		t.Errorf("Expected Liquid error message, got %q", output.String())
 	}
 }
 
@@ -432,13 +432,13 @@ func TestIncludeTagRenderToOutputBufferWithPartialName(t *testing.T) {
 		t.Fatalf("NewIncludeTag() error = %v", err)
 	}
 
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Should use template name
 	expected := "Hello"
-	if output != expected {
-		t.Errorf("Expected %q, got %q", expected, output)
+	if output.String() != expected {
+		t.Errorf("Expected %q, got %q", expected, output.String())
 	}
 }
 

@@ -1,6 +1,8 @@
 package tags
 
 import (
+	"strings"
+
 	"github.com/Notifuse/liquidgo/liquid"
 )
 
@@ -36,7 +38,7 @@ func NewUnlessTag(tagName, markup string, parseContext liquid.ParseContextInterf
 }
 
 // RenderToOutputBuffer renders the unless tag (negated if).
-func (u *UnlessTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+func (u *UnlessTag) RenderToOutputBuffer(context liquid.TagContext, output *strings.Builder) {
 	// Get the underlying Context which implements ConditionContext
 	ctx := context.Context().(*liquid.Context)
 
@@ -47,7 +49,7 @@ func (u *UnlessTag) RenderToOutputBuffer(context liquid.TagContext, output *stri
 		if err != nil {
 			// Handle error
 			errorMsg := context.HandleError(err, nil)
-			*output += errorMsg
+			output.WriteString(errorMsg)
 			return
 		}
 

@@ -200,7 +200,7 @@ func (i *IfTag) pushBlock(tagName, markup string) error {
 }
 
 // RenderToOutputBuffer renders the if tag.
-func (i *IfTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+func (i *IfTag) RenderToOutputBuffer(context liquid.TagContext, output *strings.Builder) {
 	// Get the underlying Context which implements ConditionContext
 	ctx := context.Context().(*liquid.Context)
 
@@ -218,7 +218,7 @@ func (i *IfTag) RenderToOutputBuffer(context liquid.TagContext, output *string) 
 				return
 			}
 			errorMsg := context.HandleError(err, i.LineNumber())
-			*output += errorMsg
+			output.WriteString(errorMsg)
 			return
 		}
 

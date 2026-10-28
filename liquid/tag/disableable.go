@@ -1,6 +1,8 @@
 package tag
 
 import (
+	"strings"
+
 	"github.com/Notifuse/liquidgo/liquid"
 )
 
@@ -15,13 +17,13 @@ func (d *Disableable) RenderToOutputBuffer(
 	context liquid.TagContext,
 	lineNumber *int,
 	parseContext liquid.ParseContextInterface,
-	output *string,
+	output *strings.Builder,
 	renderFn func(),
 ) {
 	disabled := context.TagDisabled(tagName)
 	if disabled {
 		errorMsg := d.disabledError(tagName, context, lineNumber, parseContext)
-		*output += errorMsg
+		output.WriteString(errorMsg)
 		return
 	}
 	renderFn()

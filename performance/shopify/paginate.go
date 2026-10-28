@@ -5,6 +5,7 @@ import (
 	"math"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/Notifuse/liquidgo/liquid"
 )
@@ -58,7 +59,7 @@ func NewPaginate(tagName, markup string, parseContext liquid.ParseContextInterfa
 }
 
 // RenderToOutputBuffer renders the paginate tag
-func (p *Paginate) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+func (p *Paginate) RenderToOutputBuffer(context liquid.TagContext, output *strings.Builder) {
 	ctx := context.Context().(*liquid.Context)
 	ctx.Push(make(map[string]interface{}))
 	defer ctx.Pop()
@@ -83,7 +84,7 @@ func (p *Paginate) RenderToOutputBuffer(context liquid.TagContext, output *strin
 	if collection == nil {
 		// In non-error mode, just render the block
 		bodyOutput := p.Render(context)
-		*output += bodyOutput
+		output.WriteString(bodyOutput)
 		return
 	}
 
@@ -96,7 +97,7 @@ func (p *Paginate) RenderToOutputBuffer(context liquid.TagContext, output *strin
 	default:
 		// In non-error mode, just render the block
 		bodyOutput := p.Render(context)
-		*output += bodyOutput
+		output.WriteString(bodyOutput)
 		return
 	}
 
@@ -152,7 +153,7 @@ func (p *Paginate) RenderToOutputBuffer(context liquid.TagContext, output *strin
 
 	// Render block content
 	bodyOutput := p.Render(context)
-	*output += bodyOutput
+	output.WriteString(bodyOutput)
 }
 
 func (p *Paginate) noLink(title string) map[string]interface{} {

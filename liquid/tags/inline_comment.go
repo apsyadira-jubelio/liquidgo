@@ -2,6 +2,7 @@ package tags
 
 import (
 	"regexp"
+	"strings"
 
 	"github.com/Notifuse/liquidgo/liquid"
 )
@@ -33,7 +34,7 @@ func NewInlineCommentTag(tagName, markup string, parseContext liquid.ParseContex
 }
 
 // RenderToOutputBuffer renders nothing for inline comments.
-func (i *InlineCommentTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+func (i *InlineCommentTag) RenderToOutputBuffer(context liquid.TagContext, output *strings.Builder) {
 	// Do nothing - comments don't render
 	_ = context // no-op to register coverage
 }

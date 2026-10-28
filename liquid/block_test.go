@@ -193,18 +193,18 @@ func TestBlockRenderToOutputBuffer(t *testing.T) {
 	block.body.nodelist = []interface{}{"test"}
 
 	ctx := NewContext()
-	output := ""
+	var output strings.Builder
 	block.RenderToOutputBuffer(ctx, &output)
-	if output != "test" {
-		t.Errorf("Expected 'test', got %q", output)
+	if output.String() != "test" {
+		t.Errorf("Expected 'test', got %q", output.String())
 	}
 
 	// Test with nil body
 	block2 := NewBlock("if", "condition", pc)
-	output2 := ""
+	var output2 strings.Builder
 	block2.RenderToOutputBuffer(ctx, &output2)
-	if output2 != "" {
-		t.Errorf("Expected empty output for nil body, got %q", output2)
+	if output2.String() != "" {
+		t.Errorf("Expected empty output.String() for nil body, got %q", output2.String())
 	}
 }
 

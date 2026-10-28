@@ -1,5 +1,7 @@
 package liquid
 
+import "strings"
+
 // Document represents the root node of a Liquid template parse tree.
 type Document struct {
 	parseContext ParseContextInterface
@@ -113,7 +115,7 @@ func (d *Document) UnknownTag(tag, markup string, tokenizer *Tokenizer) error {
 }
 
 // RenderToOutputBuffer renders the document to an output buffer.
-func (d *Document) RenderToOutputBuffer(context TagContext, output *string) {
+func (d *Document) RenderToOutputBuffer(context TagContext, output *strings.Builder) {
 	// Check if profiling is enabled
 	if ctx, ok := context.(*Context); ok && ctx.Profiler() != nil {
 		templateName := ctx.TemplateName()
@@ -128,9 +130,9 @@ func (d *Document) RenderToOutputBuffer(context TagContext, output *string) {
 
 // Render renders the document and returns the result as a string.
 func (d *Document) Render(context TagContext) string {
-	var output string
+	var output strings.Builder
 	d.RenderToOutputBuffer(context, &output)
-	return output
+	return output.String()
 }
 
 func (d *Document) parseBody(tokenizer *Tokenizer, parseContext ParseContextInterface) bool {

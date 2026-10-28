@@ -48,7 +48,7 @@ func (c *CycleTag) Named() bool {
 }
 
 // RenderToOutputBuffer renders the cycle tag.
-func (c *CycleTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+func (c *CycleTag) RenderToOutputBuffer(context liquid.TagContext, output *strings.Builder) {
 	ctx := context.Context().(*liquid.Context)
 	registers := ctx.Registers()
 
@@ -108,7 +108,7 @@ func (c *CycleTag) RenderToOutputBuffer(context liquid.TagContext, output *strin
 	} else {
 		valStr = liquid.ToS(val, nil)
 	}
-	*output += valStr
+	output.WriteString(valStr)
 
 	// Increment iteration
 	iter++

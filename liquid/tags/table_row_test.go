@@ -38,13 +38,13 @@ func TestTableRowTagBasic(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	ctx.Set("numbers", []interface{}{1, 2, 3, 4, 5, 6})
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Should generate table rows with 3 columns
 	expected := "<tr class=\"row1\">\n<td class=\"col1\">1 </td><td class=\"col2\">2 </td><td class=\"col3\">3 </td></tr>\n<tr class=\"row2\"><td class=\"col1\">4 </td><td class=\"col2\">5 </td><td class=\"col3\">6 </td></tr>\n"
-	if output != expected {
-		t.Errorf("Expected output %q, got %q", expected, output)
+	if output.String() != expected {
+		t.Errorf("Expected output.String() %q, got %q", expected, output.String())
 	}
 }
 
@@ -64,13 +64,13 @@ func TestTableRowTagEmptyCollection(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	ctx.Set("numbers", []interface{}{})
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Should generate empty row
 	expected := "<tr class=\"row1\">\n</tr>\n"
-	if output != expected {
-		t.Errorf("Expected output %q, got %q", expected, output)
+	if output.String() != expected {
+		t.Errorf("Expected output.String() %q, got %q", expected, output.String())
 	}
 }
 
@@ -90,13 +90,13 @@ func TestTableRowTagWithLimit(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	ctx.Set("numbers", []interface{}{1, 2, 3, 4, 5, 6})
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Should generate table rows with 2 columns, limited to 3 items
 	expected := "<tr class=\"row1\">\n<td class=\"col1\">1 </td><td class=\"col2\">2 </td></tr>\n<tr class=\"row2\"><td class=\"col1\">3 </td></tr>\n"
-	if output != expected {
-		t.Errorf("Expected output %q, got %q", expected, output)
+	if output.String() != expected {
+		t.Errorf("Expected output.String() %q, got %q", expected, output.String())
 	}
 }
 
@@ -116,13 +116,13 @@ func TestTableRowTagWithOffset(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	ctx.Set("numbers", []interface{}{1, 2, 3, 4, 5, 6})
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Should generate table rows starting from offset 2, with 2 columns, limited to 2 items
 	expected := "<tr class=\"row1\">\n<td class=\"col1\">3 </td><td class=\"col2\">4 </td></tr>\n"
-	if output != expected {
-		t.Errorf("Expected output %q, got %q", expected, output)
+	if output.String() != expected {
+		t.Errorf("Expected output.String() %q, got %q", expected, output.String())
 	}
 }
 
@@ -170,10 +170,10 @@ func TestTableRowTagRenderToOutputBufferEdgeCases(t *testing.T) {
 	}
 	ctx := liquid.NewContext()
 	ctx.Set("numbers", []interface{}{1, 2, 3, 4, 5})
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 	// Should render with range
-	_ = output
+	_ = output.String()
 
 	// Test with nil collection
 	tag2, _ := NewTableRowTag("tablerow", "n in numbers cols:2", pc)
@@ -183,10 +183,10 @@ func TestTableRowTagRenderToOutputBufferEdgeCases(t *testing.T) {
 	}
 	ctx2 := liquid.NewContext()
 	ctx2.Set("numbers", nil)
-	var output2 string
+	var output2 strings.Builder
 	tag2.RenderToOutputBuffer(ctx2, &output2)
 	// Should handle nil gracefully
-	_ = output2
+	_ = output2.String()
 
 	// Test with invalid attribute
 	_, err3 := NewTableRowTag("tablerow", "n in numbers invalid:value", pc)
@@ -212,25 +212,25 @@ func TestTableRowTagRenderToOutputBufferSingleRow(t *testing.T) {
 	ctx := liquid.NewContext()
 	// Single item collection
 	ctx.Set("numbers", []interface{}{1})
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Should generate single row with one column (check for expected HTML structure)
-	if !strings.Contains(output, "<tr") || !strings.Contains(output, "1") {
-		t.Errorf("Expected output to contain table row with item 1, got %q", output)
+	if !strings.Contains(output.String(), "<tr") || !strings.Contains(output.String(), "1") {
+		t.Errorf("Expected output.String() to contain table row with item 1, got %q", output.String())
 	}
-	// Check that output contains row1 (using simple check)
+	// Check that output.String() contains row1 (using simple check)
 	hasRow1 := false
-	if len(output) >= 4 {
-		for i := 0; i <= len(output)-4; i++ {
-			if output[i:i+4] == "row1" {
+	if len(output.String()) >= 4 {
+		for i := 0; i <= len(output.String())-4; i++ {
+			if output.String()[i:i+4] == "row1" {
 				hasRow1 = true
 				break
 			}
 		}
 	}
 	if !hasRow1 {
-		t.Logf("Note: Output may not contain 'row1' as expected: %q", output)
+		t.Logf("Note: Output may not contain 'row1' as expected: %q", output.String())
 	}
 }
 
@@ -252,9 +252,9 @@ func TestTableRowTagRenderToOutputBufferErrorHandling(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	ctx.Set("numbers", []interface{}{1, 2, 3})
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Should handle invalid offset gracefully (may produce error message)
-	t.Logf("Note: Invalid offset handling output: %q", output)
+	t.Logf("Note: Invalid offset handling output.String(): %q", output.String())
 }

@@ -1,6 +1,7 @@
 package liquid
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -146,10 +147,10 @@ func TestVariableRender(t *testing.T) {
 	ctx := NewContext()
 	ctx.Set("name", "bob")
 
-	output := ""
+	var output strings.Builder
 	v.RenderToOutputBuffer(ctx, &output)
-	if output != "bob" {
-		t.Errorf("Expected 'bob', got %q", output)
+	if output.String() != "bob" {
+		t.Errorf("Expected 'bob', got %q", output.String())
 	}
 }
 
@@ -207,7 +208,7 @@ func TestRenderToOutputBufferPreservesLiquidErrorTypes(t *testing.T) {
 			pc := &mockParseContext{lineNum: &lineNum}
 			v := NewVariable("panicker.trigger", pc)
 
-			output := ""
+			var output strings.Builder
 			v.RenderToOutputBuffer(ctx, &output)
 
 			// Error should be in context

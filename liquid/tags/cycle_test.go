@@ -1,6 +1,7 @@
 package tags
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/Notifuse/liquidgo/liquid"
@@ -22,20 +23,20 @@ func TestCycleTag(t *testing.T) {
 	}
 
 	ctx := liquid.NewContext()
-	var output string
+	var output strings.Builder
 
-	// First call should output first value
+	// First call should output.String() first value
 	tag.RenderToOutputBuffer(ctx, &output)
 	// Output should be "one" (the first literal string value)
-	if output != "one" {
-		t.Errorf("Expected \"one\", got %q", output)
+	if output.String() != "one" {
+		t.Errorf("Expected \"one\", got %q", output.String())
 	}
 
-	// Second call should output second value
-	output = ""
+	// Second call should output.String() second value
+	output.Reset()
 	tag.RenderToOutputBuffer(ctx, &output)
-	if output != "two" {
-		t.Errorf("Expected \"two\", got %q", output)
+	if output.String() != "two" {
+		t.Errorf("Expected \"two\", got %q", output.String())
 	}
 }
 
@@ -115,23 +116,23 @@ func TestCycleTagRenderToOutputBufferWithArray(t *testing.T) {
 	}
 
 	ctx := liquid.NewContext()
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
-	if output != "one" {
-		t.Errorf("Expected 'one', got %q", output)
+	if output.String() != "one" {
+		t.Errorf("Expected 'one', got %q", output.String())
 	}
 
 	// Test cycle wraps around
-	output = ""
+	output.Reset()
 	tag.RenderToOutputBuffer(ctx, &output)
-	if output != "two" {
-		t.Errorf("Expected 'two', got %q", output)
+	if output.String() != "two" {
+		t.Errorf("Expected 'two', got %q", output.String())
 	}
 
-	output = ""
+	output.Reset()
 	tag.RenderToOutputBuffer(ctx, &output)
-	if output != "one" {
-		t.Errorf("Expected 'one' (wrapped), got %q", output)
+	if output.String() != "one" {
+		t.Errorf("Expected 'one' (wrapped), got %q", output.String())
 	}
 }
 

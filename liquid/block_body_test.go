@@ -374,12 +374,12 @@ func TestBlockBodyInterruptChecking(t *testing.T) {
 	bb.nodelist = append(bb.nodelist, interruptNode)
 	bb.nodelist = append(bb.nodelist, "after")
 
-	var output string
+	var output strings.Builder
 	bb.RenderToOutputBuffer(ctx, &output)
 
 	// Should stop rendering after interrupt
-	if output != "before" {
-		t.Errorf("Expected output to stop after interrupt, got %q", output)
+	if output.String() != "before" {
+		t.Errorf("Expected output.String() to stop after interrupt, got %q", output.String())
 	}
 
 	if !ctx.Interrupt() {
@@ -418,37 +418,37 @@ func TestBlockBodyWhitespaceHandler(t *testing.T) {
 func TestBlockBodyRenderNodeOptimized(t *testing.T) {
 	bb := NewBlockBody()
 	ctx := NewContext()
-	output := ""
+	var output strings.Builder
 
 	// Test with a variable node
 	pc := NewParseContext(ParseContextOptions{})
 	v := NewVariable("test", pc)
 	ctx.Set("test", "value")
 	bb.renderNodeOptimized(v, ctx, &output, false, ctx)
-	if output != "value" {
-		t.Errorf("Expected 'value', got %q", output)
+	if output.String() != "value" {
+		t.Errorf("Expected 'value', got %q", output.String())
 	}
 
 	// Test with profiling enabled
-	output2 := ""
+	var output2 strings.Builder
 	ctx2 := NewContext()
 	ctx2.SetProfiler(NewProfiler())
 	v2 := NewVariable("test2", pc)
 	ctx2.Set("test2", "value2")
 	bb.renderNodeOptimized(v2, ctx2, &output2, true, ctx2)
-	if output2 != "value2" {
-		t.Errorf("Expected 'value2', got %q", output2)
+	if output2.String() != "value2" {
+		t.Errorf("Expected 'value2', got %q", output2.String())
 	}
 
 	// Test with a tag that has RenderToOutputBuffer (Pattern 2)
 	pc3 := NewParseContext(ParseContextOptions{})
 	tag := NewTag("test", "", pc3)
-	output3 := ""
+	var output3 strings.Builder
 	ctx3 := NewContext()
 	bb.renderNodeOptimized(tag, ctx3, &output3, false, ctx3)
-	// Tag.Render returns empty, so output should remain empty
-	if output3 != "" {
-		t.Logf("Tag render output: %q", output3)
+	// Tag.Render returns empty, so output.String() should remain empty
+	if output3.String() != "" {
+		t.Logf("Tag render output.String(): %q", output3.String())
 	}
 
 	// Test with a tag that has Render method (Pattern 1)
@@ -457,17 +457,17 @@ func TestBlockBodyRenderNodeOptimized(t *testing.T) {
 	}
 	custom := &customTag{Tag: NewTag("custom", "", pc3)}
 	// Add Render method via embedding - this tests the reflection path
-	output4 := ""
+	var output4 strings.Builder
 	ctx4 := NewContext()
 	bb.renderNodeOptimized(custom, ctx4, &output4, false, ctx4)
-	_ = output4
+	_ = output4.String()
 
 	// Test with blank tag
 	blankTag := NewTag("blank", "", pc3)
-	output5 := ""
+	var output5 strings.Builder
 	ctx5 := NewContext()
 	bb.renderNodeOptimized(blankTag, ctx5, &output5, false, ctx5)
-	_ = output5
+	_ = output5.String()
 }
 
 // TestBlockBodyParseLiquidTag tests liquid tag parsing
@@ -603,7 +603,7 @@ func TestBlockBodyParseForLiquidTag(t *testing.T) {
 // interruptNode is a test node that sets an interrupt
 type interruptNode struct{}
 
-func (n *interruptNode) RenderToOutputBuffer(context TagContext, output *string) {
+func (n *interruptNode) RenderToOutputBuffer(context TagContext, output *strings.Builder) {
 	interrupt := NewBreakInterrupt()
 	context.PushInterrupt(interrupt)
 }
@@ -658,7 +658,7 @@ func TestBlockBodyRenderNodeOptimizedWithProfiler(t *testing.T) {
 	pc := NewParseContext(ParseContextOptions{})
 	bb := NewBlockBody()
 	ctx := NewContext()
-	var output string
+	var output strings.Builder
 
 	// Test rendering a tag node with profiler
 	tag := NewTag("echo", "test", pc)
@@ -671,7 +671,7 @@ func TestBlockBodyRenderNodeOptimizedWithProfiler(t *testing.T) {
 
 	bb.RenderToOutputBuffer(ctx, &output)
 	// Should render the tag
-	_ = output
+	_ = output.String()
 }
 
 func TestBlockBodyParseForDocumentWithLiquidTag(t *testing.T) {

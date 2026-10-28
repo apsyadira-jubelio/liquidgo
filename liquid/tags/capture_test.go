@@ -1,6 +1,7 @@
 package tags
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/Notifuse/liquidgo/liquid"
@@ -52,7 +53,7 @@ func TestCaptureTagRender(t *testing.T) {
 	}
 
 	ctx := liquid.NewContext()
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Check that variable was captured
@@ -65,9 +66,9 @@ func TestCaptureTagRender(t *testing.T) {
 		t.Errorf("Expected variable value 'test content ', got %q", valStr)
 	}
 
-	// Capture tag should not output anything
-	if output != "" {
-		t.Errorf("Expected empty output, got %q", output)
+	// Capture tag should not output.String() anything
+	if output.String() != "" {
+		t.Errorf("Expected empty output.String(), got %q", output.String())
 	}
 }
 
@@ -131,7 +132,7 @@ func TestCaptureTagRenderToOutputBufferWithoutResourceLimits(t *testing.T) {
 	// Create context without resource limits
 	ctx := liquid.NewContext()
 	ctx.SetResourceLimits(nil) // Explicitly set to nil
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Check that variable was captured even without resource limits

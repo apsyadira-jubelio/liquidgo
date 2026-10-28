@@ -2,6 +2,7 @@ package tags
 
 import (
 	"regexp"
+	"strings"
 
 	"github.com/Notifuse/liquidgo/liquid"
 )
@@ -49,7 +50,7 @@ func (a *AssignTag) From() *liquid.Variable {
 }
 
 // RenderToOutputBuffer renders the assign tag.
-func (a *AssignTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+func (a *AssignTag) RenderToOutputBuffer(context liquid.TagContext, output *strings.Builder) {
 	val := a.from.Render(context)
 
 	// Set in the last scope (outermost scope, matching Ruby's context.scopes.last[@to] = val)

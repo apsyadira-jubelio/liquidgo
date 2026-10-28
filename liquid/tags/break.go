@@ -1,6 +1,8 @@
 package tags
 
 import (
+	"strings"
+
 	"github.com/Notifuse/liquidgo/liquid"
 )
 
@@ -17,7 +19,7 @@ func NewBreakTag(tagName, markup string, parseContext liquid.ParseContextInterfa
 }
 
 // RenderToOutputBuffer renders the break tag by pushing a break interrupt.
-func (b *BreakTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+func (b *BreakTag) RenderToOutputBuffer(context liquid.TagContext, output *strings.Builder) {
 	interrupt := liquid.NewBreakInterrupt()
 	context.PushInterrupt(interrupt)
 }

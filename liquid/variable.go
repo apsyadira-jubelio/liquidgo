@@ -404,7 +404,7 @@ func (v *Variable) Render(context TagContext) interface{} {
 }
 
 // RenderToOutputBuffer renders the variable to the output buffer.
-func (v *Variable) RenderToOutputBuffer(context TagContext, output *string) {
+func (v *Variable) RenderToOutputBuffer(context TagContext, output *strings.Builder) {
 	// Catch panics from drop method invocations and convert to error messages
 	defer func() {
 		if r := recover(); r != nil {
@@ -413,7 +413,7 @@ func (v *Variable) RenderToOutputBuffer(context TagContext, output *string) {
 			ctx, ok := ctxInterface.(*Context)
 			if !ok {
 				// If we can't get the context, just output a generic error
-				*output += "Liquid error: internal"
+				output.WriteString("Liquid error: internal")
 				return
 			}
 
@@ -434,7 +434,7 @@ func (v *Variable) RenderToOutputBuffer(context TagContext, output *string) {
 
 			// Handle the error and append the error message to output
 			errorMsg := ctx.HandleError(err, v.lineNumber)
-			*output += errorMsg
+			output.WriteString(errorMsg)
 		}
 	}()
 
@@ -444,12 +444,12 @@ func (v *Variable) RenderToOutputBuffer(context TagContext, output *string) {
 	// {{ nums }} is "123", not "[1, 2, 3]".
 	if arr, ok := val.([]interface{}); ok {
 		for _, item := range arr {
-			*output += ToS(item, nil)
+			output.WriteString(ToS(item, nil))
 		}
 		return
 	}
 
-	*output += ToS(val, nil)
+	output.WriteString(ToS(val, nil))
 }
 
 // parseContextWrapper is a minimal wrapper for ParseContextInterface when it doesn't implement ErrorMode/AddWarning.

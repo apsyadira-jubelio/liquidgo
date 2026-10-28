@@ -84,7 +84,7 @@ func (i *IncludeTag) Parse(tokenizer *liquid.Tokenizer) error {
 }
 
 // RenderToOutputBuffer renders the include tag.
-func (i *IncludeTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+func (i *IncludeTag) RenderToOutputBuffer(context liquid.TagContext, output *strings.Builder) {
 	// Evaluate template name
 	templateName := context.Evaluate(i.templateNameExpr)
 	templateNameStr, ok := templateName.(string)
@@ -100,7 +100,7 @@ func (i *IncludeTag) RenderToOutputBuffer(context liquid.TagContext, output *str
 			msg = "include tag requires a string template name"
 		}
 		errorMsg := context.HandleError(liquid.NewArgumentError(msg), i.LineNumber())
-		*output += errorMsg
+		output.WriteString(errorMsg)
 		return
 	}
 
@@ -108,7 +108,7 @@ func (i *IncludeTag) RenderToOutputBuffer(context liquid.TagContext, output *str
 	partial, err := liquid.LoadPartial(templateNameStr, context, i.ParseContext())
 	if err != nil {
 		errorMsg := context.HandleError(err, i.LineNumber())
-		*output += errorMsg
+		output.WriteString(errorMsg)
 		return
 	}
 
@@ -116,7 +116,7 @@ func (i *IncludeTag) RenderToOutputBuffer(context liquid.TagContext, output *str
 	partialTemplate, ok := partial.(*liquid.Template)
 	if !ok {
 		errorMsg := context.HandleError(liquid.NewFileSystemError("partial is not a template"), i.LineNumber())
-		*output += errorMsg
+		output.WriteString(errorMsg)
 		return
 	}
 
@@ -143,7 +143,7 @@ func (i *IncludeTag) RenderToOutputBuffer(context liquid.TagContext, output *str
 	ctx, ok := context.(*liquid.Context)
 	if !ok {
 		errorMsg := context.HandleError(liquid.NewInternalError("context is not a liquid.Context"), i.LineNumber())
-		*output += errorMsg
+		output.WriteString(errorMsg)
 		return
 	}
 

@@ -180,18 +180,18 @@ func TestTemplateRenderToOutputBuffer(t *testing.T) {
 	// Test with Context
 	ctx := NewContext()
 	ctx.Set("name", "world")
-	output := ""
+	var output strings.Builder
 	template.RenderToOutputBuffer(ctx, &output)
-	if output != "Hello world" {
-		t.Errorf("Expected 'Hello world', got %q", output)
+	if output.String() != "Hello world" {
+		t.Errorf("Expected 'Hello world', got %q", output.String())
 	}
 
 	// Test with nil root
 	template2 := NewTemplate(&TemplateOptions{Environment: env})
-	output2 := ""
+	var output2 strings.Builder
 	template2.RenderToOutputBuffer(ctx, &output2)
-	if output2 != "" {
-		t.Errorf("Expected empty output for nil root, got %q", output2)
+	if output2.String() != "" {
+		t.Errorf("Expected empty output.String() for nil root, got %q", output2.String())
 	}
 
 	// Test with memory error recovery
@@ -202,20 +202,20 @@ func TestTemplateRenderToOutputBuffer(t *testing.T) {
 	}
 	ctx3 := NewContext()
 	ctx3.Set("name", "test")
-	var output3 string
+	var output3 strings.Builder
 	template3.RenderToOutputBuffer(ctx3, &output3)
-	if output3 != "test" {
-		t.Errorf("Expected 'test', got %q", output3)
+	if output3.String() != "test" {
+		t.Errorf("Expected 'test', got %q", output3.String())
 	}
 
 	// Test with fallback path - create a context from map
 	ctx4 := BuildContext(ContextConfig{
 		Environments: []map[string]interface{}{{"name": "test"}},
 	})
-	output4 := ""
+	var output4 strings.Builder
 	template.RenderToOutputBuffer(ctx4, &output4)
-	if output4 == "" {
-		t.Error("Expected non-empty output")
+	if output4.String() == "" {
+		t.Error("Expected non-empty output.String()")
 	}
 }
 
@@ -671,17 +671,17 @@ func TestTemplateRenderToOutputBufferWithNonContext(t *testing.T) {
 		ctx:     NewContext(),
 	}
 
-	var output string
+	var output strings.Builder
 	// Should use fallback rendering path (Render method)
 	// Note: The fallback path may not fully evaluate variables, so we just verify it doesn't panic
 	template.RenderToOutputBuffer(customCtx, &output)
 
-	// The fallback path may produce partial output or empty output
+	// The fallback path may produce partial output.String() or empty output.String()
 	// We're testing that it doesn't panic and handles non-Context gracefully
-	if len(output) == 0 {
-		t.Logf("Note: Fallback rendering path produced empty output (may be expected)")
+	if len(output.String()) == 0 {
+		t.Logf("Note: Fallback rendering path produced empty output.String() (may be expected)")
 	} else {
-		t.Logf("Note: Fallback rendering path produced: %q", output)
+		t.Logf("Note: Fallback rendering path produced: %q", output.String())
 	}
 }
 
@@ -778,12 +778,12 @@ func TestTemplateRenderToOutputBufferNilRoot(t *testing.T) {
 	template := NewTemplate(&TemplateOptions{Environment: env})
 	// Don't parse, so root is nil
 
-	var output string
+	var output strings.Builder
 	template.RenderToOutputBuffer(NewContext(), &output)
 
-	// Should not panic and output should be empty
-	if output != "" {
-		t.Errorf("Expected empty output for nil root, got %q", output)
+	// Should not panic and output.String() should be empty
+	if output.String() != "" {
+		t.Errorf("Expected empty output.String() for nil root, got %q", output.String())
 	}
 }
 
@@ -806,7 +806,7 @@ func TestTemplateRenderToOutputBufferResourceLimitsReset(t *testing.T) {
 	initialRenderScore := rl.RenderScore()
 	initialAssignScore := rl.AssignScore()
 
-	var output string
+	var output strings.Builder
 	// RenderToOutputBuffer should reset resource limits
 	template.RenderToOutputBuffer(ctx, &output)
 
@@ -834,7 +834,7 @@ func TestTemplateRenderToOutputBufferTemplateNameSetting(t *testing.T) {
 		t.Error("Expected empty template name initially")
 	}
 
-	var output string
+	var output strings.Builder
 	template.RenderToOutputBuffer(ctx, &output)
 
 	// Template name should be set

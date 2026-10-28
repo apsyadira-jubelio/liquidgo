@@ -1,6 +1,8 @@
 package tags
 
 import (
+	"strings"
+
 	"github.com/Notifuse/liquidgo/liquid"
 )
 
@@ -19,8 +21,8 @@ func NewEchoTag(tagName, markup string, parseContext liquid.ParseContextInterfac
 }
 
 // RenderToOutputBuffer renders the echo tag by rendering the variable.
-func (e *EchoTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+func (e *EchoTag) RenderToOutputBuffer(context liquid.TagContext, output *strings.Builder) {
 	// Render the variable and append to output
 	val := e.variable.Render(context)
-	*output += liquid.ToS(val, nil)
+	output.WriteString(liquid.ToS(val, nil))
 }

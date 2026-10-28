@@ -1,6 +1,7 @@
 package tags
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/Notifuse/liquidgo/liquid"
@@ -36,11 +37,11 @@ func TestUnlessTagFalseCondition(t *testing.T) {
 	}
 
 	ctx := liquid.NewContext()
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
-	if output != "content " {
-		t.Errorf("Expected output 'content ', got %q", output)
+	if output.String() != "content " {
+		t.Errorf("Expected output.String() 'content ', got %q", output.String())
 	}
 }
 
@@ -59,11 +60,11 @@ func TestUnlessTagTrueCondition(t *testing.T) {
 	}
 
 	ctx := liquid.NewContext()
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
-	if output != "" {
-		t.Errorf("Expected empty output, got %q", output)
+	if output.String() != "" {
+		t.Errorf("Expected empty output.String(), got %q", output.String())
 	}
 }
 
@@ -86,12 +87,12 @@ func TestUnlessTagWithElse(t *testing.T) {
 	}
 
 	ctx := liquid.NewContext()
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Since unless condition is true, it won't render, so else should render
-	if output != " else content " {
-		t.Errorf("Expected output ' else content ', got %q", output)
+	if output.String() != " else content " {
+		t.Errorf("Expected output.String() ' else content ', got %q", output.String())
 	}
 }
 
@@ -110,12 +111,12 @@ func TestUnlessTagWithNilValue(t *testing.T) {
 		t.Fatalf("Parse() error = %v", err)
 	}
 
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// nil value should render (unless renders when false/nil)
-	if output != "content " {
-		t.Errorf("Expected output 'content ', got %q", output)
+	if output.String() != "content " {
+		t.Errorf("Expected output.String() 'content ', got %q", output.String())
 	}
 }
 
@@ -133,12 +134,12 @@ func TestUnlessTagWithEmptyString(t *testing.T) {
 		t.Fatalf("Parse() error = %v", err)
 	}
 
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Empty string should render (unless renders when false/empty)
-	if output != "content " {
-		t.Errorf("Expected output 'content ', got %q", output)
+	if output.String() != "content " {
+		t.Errorf("Expected output.String() 'content ', got %q", output.String())
 	}
 }
 
@@ -158,10 +159,10 @@ func TestUnlessTagWithErrorInEvaluation(t *testing.T) {
 
 	// Create a context that will cause an error during evaluation
 	// Use a variable that causes an error when evaluated
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
-	// Should handle error gracefully (output may contain error message or be empty)
+	// Should handle error gracefully (output.String() may contain error message or be empty)
 	// The exact behavior depends on error handling implementation
 }
 
@@ -182,13 +183,13 @@ func TestUnlessTagRenderToOutputBufferEdgeCases(t *testing.T) {
 	}
 
 	ctx := liquid.NewContext()
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Since unless condition is false, it should render unless content
 	// elsif/else should not render
-	if output != "unless content " {
-		t.Logf("Note: Unless with elsif output: %q (expected 'unless content ')", output)
+	if output.String() != "unless content " {
+		t.Logf("Note: Unless with elsif output.String(): %q (expected 'unless content ')", output.String())
 	}
 }
 
@@ -239,12 +240,12 @@ func TestUnlessTagRenderWithError(t *testing.T) {
 	ctx := liquid.NewContext()
 	ctx.Set("var", "value")
 
-	var output string
+	var output strings.Builder
 	// This should handle the error gracefully
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Output may contain error message or be empty
-	_ = output
+	_ = output.String()
 }
 
 // TestUnlessTagWithNonBooleanResultValues tests various falsy/truthy values
@@ -278,17 +279,17 @@ func TestUnlessTagWithVariousValues(t *testing.T) {
 			ctx := liquid.NewContext()
 			ctx.Set(tt.varName, tt.varValue)
 
-			var output string
+			var output strings.Builder
 			tag.RenderToOutputBuffer(ctx, &output)
 
 			if tt.shouldRender {
 				expected := "content "
-				if output != expected {
-					t.Errorf("Expected %q for %v, got %q", expected, tt.varValue, output)
+				if output.String() != expected {
+					t.Errorf("Expected %q for %v, got %q", expected, tt.varValue, output.String())
 				}
 			} else {
-				if output != "" {
-					t.Errorf("Expected no content for %v, got %q", tt.varValue, output)
+				if output.String() != "" {
+					t.Errorf("Expected no content for %v, got %q", tt.varValue, output.String())
 				}
 			}
 		})

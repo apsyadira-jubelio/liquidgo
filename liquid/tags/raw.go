@@ -76,8 +76,8 @@ func (r *RawTag) Parse(tokenizer *liquid.Tokenizer) error {
 }
 
 // RenderToOutputBuffer renders the raw tag.
-func (r *RawTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
-	*output += r.body
+func (r *RawTag) RenderToOutputBuffer(context liquid.TagContext, output *strings.Builder) {
+	output.WriteString(r.body)
 }
 
 // Nodelist returns the nodelist (just the body as a string).

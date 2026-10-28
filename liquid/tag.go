@@ -102,10 +102,10 @@ func (t *Tag) Render(context TagContext) string {
 // Note: Due to Go's method dispatch with embedded pointers, this method cannot
 // automatically call overridden Render() methods in subtypes. Tags that override
 // Render() must be handled specially in the rendering code.
-func (t *Tag) RenderToOutputBuffer(context TagContext, output *string) {
+func (t *Tag) RenderToOutputBuffer(context TagContext, output *strings.Builder) {
 	renderResult := t.Render(context)
 	if renderResult != "" {
-		*output += renderResult
+		output.WriteString(renderResult)
 	}
 }
 

@@ -1,6 +1,7 @@
 package tags
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/Notifuse/liquidgo/liquid"
@@ -22,7 +23,7 @@ func TestAssignTag(t *testing.T) {
 	}
 
 	ctx := liquid.NewContext()
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Check that variable was assigned
@@ -53,7 +54,7 @@ func TestAssignTagEmptyString(t *testing.T) {
 	}
 
 	ctx := liquid.NewContext()
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	val := ctx.Get("a")
@@ -72,7 +73,7 @@ func TestAssignTagFromVariable(t *testing.T) {
 		t.Fatalf("NewAssignTag() error = %v", err)
 	}
 
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Check that var2 was assigned from var
@@ -96,7 +97,7 @@ func TestAssignTagWithHyphenInVariableName(t *testing.T) {
 	}
 
 	ctx := liquid.NewContext()
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Check that variable was assigned
@@ -119,7 +120,7 @@ func TestAssignTagWithArray(t *testing.T) {
 		t.Fatalf("NewAssignTag() error = %v", err)
 	}
 
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Check that foo was assigned
@@ -173,7 +174,7 @@ func TestAssignTagAssignScoreOf(t *testing.T) {
 	// Test assignScoreOf with string
 	tag1, _ := NewAssignTag("assign", `var = "hello"`, pc)
 	ctx.Set("var", "hello")
-	var output1 string
+	var output1 strings.Builder
 	tag1.RenderToOutputBuffer(ctx, &output1)
 	// assignScoreOf is called internally, verify assignment worked
 	if ctx.Get("var") != "hello" {
@@ -183,7 +184,7 @@ func TestAssignTagAssignScoreOf(t *testing.T) {
 	// Test assignScoreOf with array
 	tag2, _ := NewAssignTag("assign", `arr = values`, pc)
 	ctx.Set("values", []interface{}{"a", "b", "c"})
-	var output2 string
+	var output2 strings.Builder
 	tag2.RenderToOutputBuffer(ctx, &output2)
 	arr := ctx.Get("arr")
 	if arr == nil {
@@ -193,7 +194,7 @@ func TestAssignTagAssignScoreOf(t *testing.T) {
 	// Test assignScoreOf with map
 	tag3, _ := NewAssignTag("assign", `map = data`, pc)
 	ctx.Set("data", map[string]interface{}{"key": "value"})
-	var output3 string
+	var output3 strings.Builder
 	tag3.RenderToOutputBuffer(ctx, &output3)
 	m := ctx.Get("map")
 	if m == nil {
@@ -212,7 +213,7 @@ func TestAssignTagWithMap(t *testing.T) {
 		t.Fatalf("NewAssignTag() error = %v", err)
 	}
 
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Check that r was assigned
@@ -243,7 +244,7 @@ func TestAssignTagWithResourceLimits(t *testing.T) {
 		t.Fatalf("NewAssignTag() error = %v", err)
 	}
 
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
 	// Verify assignment worked

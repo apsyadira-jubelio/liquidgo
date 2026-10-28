@@ -1,7 +1,9 @@
 package liquid
 
 import (
+	"strings"
 	"sync"
+	"sync/atomic"
 	"unicode/utf8"
 )
 
@@ -57,9 +59,11 @@ type Template struct {
 	name            string
 	warnings        []error
 	errors          []error
-	rethrowErrors   bool
-	lineNumbers     bool
-	profiling       bool
+	// outputHint is the last render's length, used to presize the next buffer.
+	outputHint    atomic.Int64
+	rethrowErrors bool
+	lineNumbers   bool
+	profiling     bool
 }
 
 // TemplateOptions contains options for parsing a template.
@@ -251,6 +255,8 @@ func (t *Template) InstanceAssigns() map[string]interface{} {
 
 // Errors returns the errors.
 func (t *Template) Errors() []error {
+	t.mu.Lock()
+	defer t.mu.Unlock()
 	if t.errors == nil {
 		t.errors = []error{}
 	}
@@ -302,8 +308,10 @@ func (t *Template) Render(assigns interface{}, options *RenderOptions) (output s
 	}
 
 	// Use output from options if provided
+	var buf strings.Builder
+	buf.Grow(int(t.outputHint.Load()))
 	if options != nil && options.Output != nil {
-		output = *options.Output
+		buf.WriteString(*options.Output)
 	}
 
 	defer func() {
@@ -382,7 +390,9 @@ func (t *Template) Render(assigns interface{}, options *RenderOptions) (output s
 		}
 	}()
 
-	t.root.RenderToOutputBuffer(context, &output)
+	t.root.RenderToOutputBuffer(context, &buf)
+	t.outputHint.Store(int64(buf.Len()))
+	output = buf.String()
 	return output
 }
 
@@ -404,7 +414,7 @@ func (t *Template) RenderBang(assigns interface{}, options *RenderOptions) strin
 }
 
 // RenderToOutputBuffer renders the template to the output buffer.
-func (t *Template) RenderToOutputBuffer(context TagContext, output *string) {
+func (t *Template) RenderToOutputBuffer(context TagContext, output *strings.Builder) {
 	if t.root == nil {
 		return
 	}
@@ -426,13 +436,15 @@ func (t *Template) RenderToOutputBuffer(context TagContext, output *string) {
 					panic(r)
 				}
 			}
+			t.mu.Lock()
 			t.errors = ctx.Errors()
+			t.mu.Unlock()
 		}()
 
 		t.root.RenderToOutputBuffer(context, output)
 	} else {
 		// Fallback: use Render method
-		_ = t.Render(context, &RenderOptions{Output: output})
+		output.WriteString(t.Render(context, nil))
 	}
 }
 

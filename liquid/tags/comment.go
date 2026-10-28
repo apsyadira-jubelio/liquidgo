@@ -27,7 +27,7 @@ func NewCommentTag(tagName, markup string, parseContext liquid.ParseContextInter
 }
 
 // RenderToOutputBuffer renders the comment tag (does nothing - comments don't render).
-func (c *CommentTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+func (c *CommentTag) RenderToOutputBuffer(context liquid.TagContext, output *strings.Builder) {
 	// Comments don't render anything
 	_ = context // no-op to register coverage
 }

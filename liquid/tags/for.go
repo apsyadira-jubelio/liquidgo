@@ -190,7 +190,7 @@ func (f *ForTag) parseBody(tokenizer *liquid.Tokenizer, body *liquid.BlockBody) 
 }
 
 // RenderToOutputBuffer renders the for tag.
-func (f *ForTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+func (f *ForTag) RenderToOutputBuffer(context liquid.TagContext, output *strings.Builder) {
 	segment := f.collectionSegment(context)
 
 	if len(segment) == 0 {
@@ -286,7 +286,7 @@ func (f *ForTag) collectionSegment(context liquid.TagContext) []interface{} {
 }
 
 // renderSegment renders the segment.
-func (f *ForTag) renderSegment(context liquid.TagContext, output *string, segment []interface{}) {
+func (f *ForTag) renderSegment(context liquid.TagContext, output *strings.Builder, segment []interface{}) {
 	registers := context.Registers()
 
 	// Get or create for_stack
@@ -357,7 +357,7 @@ func (f *ForTag) renderSegment(context liquid.TagContext, output *string, segmen
 }
 
 // renderElse renders the else block if collection is empty.
-func (f *ForTag) renderElse(context liquid.TagContext, output *string) {
+func (f *ForTag) renderElse(context liquid.TagContext, output *strings.Builder) {
 	if f.elseBlock != nil {
 		f.elseBlock.RenderToOutputBuffer(context, output)
 	}

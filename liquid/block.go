@@ -3,6 +3,7 @@ package liquid
 import (
 	"fmt"
 	"reflect"
+	"strings"
 )
 
 const (
@@ -66,7 +67,7 @@ func (b *Block) Render(context TagContext) string {
 // it uses that instead of rendering the body (for backwards compatibility).
 // This matches Ruby's behavior where Block#render_to_output_buffer calls render
 // if it's been overridden, otherwise renders the body.
-func (b *Block) RenderToOutputBuffer(context TagContext, output *string) {
+func (b *Block) RenderToOutputBuffer(context TagContext, output *strings.Builder) {
 	// Use Tag.RenderToOutputBuffer which calls Render and checks if it returns non-empty
 	// Tag.RenderToOutputBuffer calls t.Render(context). If t is *TestBlockTag,
 	// it will call TestBlockTag.Render, not Block.Render, because Go's method resolution
@@ -94,7 +95,7 @@ func (b *Block) RenderToOutputBuffer(context TagContext, output *string) {
 				}
 				// If Render returns something different from body, it's been overridden
 				if renderResult != bodyResult {
-					*output += renderResult
+					output.WriteString(renderResult)
 					return
 				}
 			}

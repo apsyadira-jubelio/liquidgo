@@ -1,6 +1,8 @@
 package tags
 
 import (
+	"strings"
+
 	"github.com/Notifuse/liquidgo/liquid"
 )
 
@@ -17,7 +19,7 @@ func NewContinueTag(tagName, markup string, parseContext liquid.ParseContextInte
 }
 
 // RenderToOutputBuffer renders the continue tag by pushing a continue interrupt.
-func (c *ContinueTag) RenderToOutputBuffer(context liquid.TagContext, output *string) {
+func (c *ContinueTag) RenderToOutputBuffer(context liquid.TagContext, output *strings.Builder) {
 	interrupt := liquid.NewContinueInterrupt()
 	context.PushInterrupt(interrupt)
 }

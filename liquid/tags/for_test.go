@@ -1,6 +1,7 @@
 package tags
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/Notifuse/liquidgo/liquid"
@@ -37,11 +38,11 @@ func TestForTagSimpleLoop(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	ctx.Set("array", []interface{}{1, 2, 3})
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
-	if output != "1 2 3 " {
-		t.Errorf("Expected output '1 2 3 ', got %q", output)
+	if output.String() != "1 2 3 " {
+		t.Errorf("Expected output.String() '1 2 3 ', got %q", output.String())
 	}
 }
 
@@ -61,11 +62,11 @@ func TestForTagEmptyCollection(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	ctx.Set("array", []interface{}{})
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
-	if output != "empty" {
-		t.Errorf("Expected output 'empty', got %q", output)
+	if output.String() != "empty" {
+		t.Errorf("Expected output.String() 'empty', got %q", output.String())
 	}
 }
 
@@ -85,11 +86,11 @@ func TestForTagReversed(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	ctx.Set("array", []interface{}{1, 2, 3})
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
-	if output != "3 2 1 " {
-		t.Errorf("Expected output '3 2 1 ', got %q", output)
+	if output.String() != "3 2 1 " {
+		t.Errorf("Expected output.String() '3 2 1 ', got %q", output.String())
 	}
 }
 
@@ -109,11 +110,11 @@ func TestForTagWithLimit(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	ctx.Set("array", []interface{}{1, 2, 3, 4, 5})
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
-	if output != "1 2 " {
-		t.Errorf("Expected output '1 2 ', got %q", output)
+	if output.String() != "1 2 " {
+		t.Errorf("Expected output.String() '1 2 ', got %q", output.String())
 	}
 }
 
@@ -133,11 +134,11 @@ func TestForTagWithOffset(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	ctx.Set("array", []interface{}{1, 2, 3, 4, 5})
-	var output string
+	var output strings.Builder
 	tag.RenderToOutputBuffer(ctx, &output)
 
-	if output != "3 4 " {
-		t.Errorf("Expected output '3 4 ', got %q", output)
+	if output.String() != "3 4 " {
+		t.Errorf("Expected output.String() '3 4 ', got %q", output.String())
 	}
 }
 
@@ -287,14 +288,14 @@ func TestForTagRenderSegment(t *testing.T) {
 
 	ctx := liquid.NewContext()
 	ctx.Set("array", []interface{}{1, 2, 3})
-	var output string
+	var output strings.Builder
 
 	// Test renderSegment
 	segment := []interface{}{1, 2, 3}
 	tag.renderSegment(ctx, &output, segment)
 	expected := "1 2 3 "
-	if output != expected {
-		t.Errorf("Expected %q, got %q", expected, output)
+	if output.String() != expected {
+		t.Errorf("Expected %q, got %q", expected, output.String())
 	}
 }
 
@@ -631,13 +632,13 @@ func TestForTagRenderSegmentInvalidForStack(t *testing.T) {
 	registers := ctx.Registers()
 	registers.Set("for_stack", "not_a_slice")
 
-	var output string
+	var output strings.Builder
 	segment := []interface{}{1, 2, 3}
 	tag.renderSegment(ctx, &output, segment)
 	// Should handle gracefully and create new stack
 	expected := "1 2 3 "
-	if output != expected {
-		t.Errorf("Expected %q, got %q", expected, output)
+	if output.String() != expected {
+		t.Errorf("Expected %q, got %q", expected, output.String())
 	}
 }
 
@@ -665,13 +666,13 @@ func TestForTagRenderSegmentWithParentLoop(t *testing.T) {
 	forStack := []*liquid.ForloopDrop{parentLoop}
 	registers.Set("for_stack", forStack)
 
-	var output string
+	var output strings.Builder
 	segment := []interface{}{1, 2, 3}
 	tag.renderSegment(ctx, &output, segment)
 	// Should use parent loop
 	expected := "1 2 3 "
-	if output != expected {
-		t.Errorf("Expected %q, got %q", expected, output)
+	if output.String() != expected {
+		t.Errorf("Expected %q, got %q", expected, output.String())
 	}
 
 	// Verify stack was popped
@@ -703,14 +704,14 @@ func TestForTagRenderSegmentWithBreakInterrupt(t *testing.T) {
 	ctx := liquid.NewContext()
 	ctx.Set("array", []interface{}{1, 2, 3})
 
-	var output string
+	var output strings.Builder
 	segment := []interface{}{1, 2, 3}
 	tag.renderSegment(ctx, &output, segment)
 	// Should break after rendering item 2 and detecting break in if statement
 	// Output: "1 " (item 1 + space) + "2" (item 2, then break before space)
 	expected := "1 2"
-	if output != expected {
-		t.Errorf("Expected %q, got %q", expected, output)
+	if output.String() != expected {
+		t.Errorf("Expected %q, got %q", expected, output.String())
 	}
 }
 
@@ -734,13 +735,13 @@ func TestForTagRenderSegmentWithContinueInterrupt(t *testing.T) {
 	ctx := liquid.NewContext()
 	ctx.Set("array", []interface{}{1, 2, 3})
 
-	var output string
+	var output strings.Builder
 	segment := []interface{}{1, 2, 3}
 	tag.renderSegment(ctx, &output, segment)
-	// Should skip item 2, output should contain "1" and "3" but not "2"
+	// Should skip item 2, output.String() should contain "1" and "3" but not "2"
 	expected := "1 3 "
-	if output != expected {
-		t.Errorf("Expected %q, got %q", expected, output)
+	if output.String() != expected {
+		t.Errorf("Expected %q, got %q", expected, output.String())
 	}
 }
 
@@ -766,7 +767,7 @@ func TestForTagRenderSegmentStackPopping(t *testing.T) {
 	initialStack := []*liquid.ForloopDrop{}
 	registers.Set("for_stack", initialStack)
 
-	var output string
+	var output strings.Builder
 	segment := []interface{}{1, 2}
 	tag.renderSegment(ctx, &output, segment)
 
