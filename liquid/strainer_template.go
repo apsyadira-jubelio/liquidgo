@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"sync"
 )
 
 // StrainerTemplate is the computed class for the filters system.
@@ -192,15 +193,11 @@ func (st *StrainerTemplate) Invoke(method string, args ...interface{}) (interfac
 
 		// Look for the method - try both original case and capitalized version
 		// Go method names are capitalized, but Liquid filter names are lowercase
-		methodValue := filterValue.MethodByName(method)
-		if !methodValue.IsValid() && len(method) > 0 {
-			// Try capitalized version (first letter uppercase)
-			capitalizedMethod := strings.ToUpper(method[:1]) + method[1:]
-			methodValue = filterValue.MethodByName(capitalizedMethod)
-		}
-		if !methodValue.IsValid() {
+		idx := filterMethodIndex(filterValue.Type(), method)
+		if idx < 0 {
 			continue
 		}
+		methodValue := filterValue.Method(idx)
 
 		// Check if method signature matches (first arg is input, rest are filter args)
 		methodType := methodValue.Type()
@@ -305,4 +302,33 @@ func snakeToCamelCase(s string) string {
 	}
 
 	return strings.Join(parts, "")
+}
+
+type filterMethodKey struct {
+	t    reflect.Type
+	name string
+}
+
+// filterMethodIndexCache memoises filterMethodIndex. Keys are registered
+// filter names per filter type, so it stays bounded. Type.MethodByName
+// allocates a func type on every call, which dominated filter invocation.
+var filterMethodIndexCache sync.Map // map[filterMethodKey]int
+
+// filterMethodIndex finds method (or its capitalized form) on t, -1 if absent.
+func filterMethodIndex(t reflect.Type, method string) int {
+	key := filterMethodKey{t, method}
+	if cached, ok := filterMethodIndexCache.Load(key); ok {
+		return cached.(int)
+	}
+	idx := -1
+	if m, ok := t.MethodByName(method); ok {
+		idx = m.Index
+	} else if len(method) > 0 {
+		// Try capitalized version (first letter uppercase)
+		if m, ok := t.MethodByName(strings.ToUpper(method[:1]) + method[1:]); ok {
+			idx = m.Index
+		}
+	}
+	filterMethodIndexCache.Store(key, idx)
+	return idx
 }

@@ -63,8 +63,10 @@ func (i *I18n) Locale() (map[string]interface{}, error) {
 	return i.locale, nil
 }
 
+var i18nInterpolation = regexp.MustCompile(`%\{(\w+)\}`)
+
 func (i *I18n) interpolate(name string, vars map[string]interface{}) string {
-	re := regexp.MustCompile(`%\{(\w+)\}`)
+	re := i18nInterpolation
 	return re.ReplaceAllStringFunc(name, func(match string) string {
 		key := re.FindStringSubmatch(match)[1]
 		if val, ok := vars[key]; ok {

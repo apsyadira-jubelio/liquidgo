@@ -6,11 +6,13 @@ import (
 )
 
 var (
-	variableFilterMarkupRegex        = regexp.MustCompile(`\|\s*(.*)`)
-	variableFilterParser             = regexp.MustCompile(`(?:\s+|"[^"]*"|'[^']*'|(?:[^\s,\|'"]|"[^"]*"|'[^']*')+)+`)
-	variableFilterArgsRegex          = regexp.MustCompile(`(?::|,)\s*((?:\w+\s*:\s*)?(?:[^\s,\|'"]|"[^"]*"|'[^']*')+)`)
-	variableJustTagAttributes        = regexp.MustCompile(`^(\w[\w-]*)\s*:\s*((?:"[^"]*"|'[^']*'|(?:[^\s,\|'"]|"[^"]*"|'[^']*')+)+)$`)
-	variableMarkupWithQuotedFragment = regexp.MustCompile(`^([^\|]+)(.*)$`)
+	variableFilterMarkupRegex = regexp.MustCompile(`\|\s*(.*)`)
+	variableFilterParser      = regexp.MustCompile(`(?:\s+|"[^"]*"|'[^']*'|(?:[^\s,\|'"]|"[^"]*"|'[^']*')+)+`)
+	variableFilterArgsRegex   = regexp.MustCompile(`(?::|,)\s*((?:\w+\s*:\s*)?(?:[^\s,\|'"]|"[^"]*"|'[^']*')+)`)
+	variableJustTagAttributes = regexp.MustCompile(`^(\w[\w-]*)\s*:\s*((?:"[^"]*"|'[^']*'|(?:[^\s,\|'"]|"[^"]*"|'[^']*')+)+)$`)
+	// Ruby: /(#{QuotedFragment})(.*)/om — unanchored, so the name is the
+	// first quoted fragment and the rest (`and b` in `a and b`) is ignored.
+	variableMarkupWithQuotedFragment = regexp.MustCompile(`("[^"]*"|'[^']*'|(?:[^\s,\|'"]|"[^"]*"|'[^']*')+)(?s:(.*))`)
 )
 
 // ParseContextInterface interface for parsing expressions
@@ -160,7 +162,7 @@ func (v *Variable) laxParse(markup string) {
 		return
 	}
 
-	nameMarkup := strings.TrimSpace(matches[1])
+	nameMarkup := matches[1]
 	filterMarkup := matches[2]
 
 	v.name = v.parseContext.ParseExpression(nameMarkup)

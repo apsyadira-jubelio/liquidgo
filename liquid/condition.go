@@ -225,14 +225,70 @@ func (c *Condition) equalVariables(left, right interface{}) bool {
 		return checkMethodLiteral(ml, left)
 	}
 
-	// Ruby compares numerics across Integer/Float (1 == 1.0), Go's == does not.
+	return rubyEqual(left, right)
+}
+
+// rubyEqual is Ruby's ==: numerics compare across Integer/Float (1 == 1.0),
+// arrays and hashes compare structurally, everything else (drops, pointers)
+// by Go == when comparable. Never panics on uncomparable values.
+func rubyEqual(left, right interface{}) bool {
 	if lf, lok := numericValue(left); lok {
 		if rf, rok := numericValue(right); rok {
 			return lf == rf
 		}
 	}
+	if left == nil || right == nil {
+		return left == nil && right == nil
+	}
+	lv, rv := reflect.ValueOf(left), reflect.ValueOf(right)
+	lk, rk := lv.Kind(), rv.Kind()
+	switch {
+	case (lk == reflect.Slice || lk == reflect.Array) && (rk == reflect.Slice || rk == reflect.Array):
+		if lv.Len() != rv.Len() {
+			return false
+		}
+		for i := 0; i < lv.Len(); i++ {
+			if !rubyEqual(lv.Index(i).Interface(), rv.Index(i).Interface()) {
+				return false
+			}
+		}
+		return true
+	case lk == reflect.Map && rk == reflect.Map:
+		if lv.Len() != rv.Len() || lv.Type().Key() != rv.Type().Key() {
+			return false
+		}
+		iter := lv.MapRange()
+		for iter.Next() {
+			r := rv.MapIndex(iter.Key())
+			if !r.IsValid() || !rubyEqual(iter.Value().Interface(), r.Interface()) {
+				return false
+			}
+		}
+		return true
+	}
+	if lv.Comparable() && rv.Comparable() {
+		return left == right
+	}
+	return reflect.DeepEqual(left, right)
+}
 
-	return left == right
+// isBlank is ActiveSupport's blank?, which Shopify's `blank` literal uses:
+// nil, false, whitespace-only strings and empty arrays/hashes.
+func isBlank(obj interface{}) bool {
+	switch v := obj.(type) {
+	case nil:
+		return true
+	case bool:
+		return !v
+	case string:
+		return strings.TrimSpace(v) == ""
+	}
+	rv := reflect.ValueOf(obj)
+	switch rv.Kind() {
+	case reflect.Slice, reflect.Array, reflect.Map:
+		return rv.Len() == 0
+	}
+	return false
 }
 
 // IsTruthy reports Ruby truthiness: only nil and false are falsy. Empty
@@ -279,10 +335,7 @@ func numericValue(v interface{}) (float64, bool) {
 func checkMethodLiteral(ml *MethodLiteral, obj interface{}) bool {
 	switch ml.MethodName {
 	case "blank":
-		if str, ok := obj.(string); ok {
-			return strings.TrimSpace(str) == ""
-		}
-		return obj == nil || obj == ""
+		return isBlank(obj)
 	case "empty":
 		if str, ok := obj.(string); ok {
 			return str == ""

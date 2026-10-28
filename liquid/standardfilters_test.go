@@ -915,39 +915,41 @@ func TestFloor(t *testing.T) {
 }
 
 func TestAtMost(t *testing.T) {
+	// Ruby keeps Integer for Integer inputs.
 	sf := &StandardFilters{}
 
 	result := sf.AtMost(5, 4)
-	if result != float64(4) {
+	if result != (4) {
 		t.Errorf("AtMost(5, 4) = %v, want 4", result)
 	}
 
 	result = sf.AtMost(5, 5)
-	if result != float64(5) {
+	if result != (5) {
 		t.Errorf("AtMost(5, 5) = %v, want 5", result)
 	}
 
 	result = sf.AtMost(5, 6)
-	if result != float64(5) {
+	if result != (5) {
 		t.Errorf("AtMost(5, 6) = %v, want 5", result)
 	}
 }
 
 func TestAtLeast(t *testing.T) {
+	// Ruby keeps Integer for Integer inputs.
 	sf := &StandardFilters{}
 
 	result := sf.AtLeast(5, 4)
-	if result != float64(5) {
+	if result != (5) {
 		t.Errorf("AtLeast(5, 4) = %v, want 5", result)
 	}
 
 	result = sf.AtLeast(5, 5)
-	if result != float64(5) {
+	if result != (5) {
 		t.Errorf("AtLeast(5, 5) = %v, want 5", result)
 	}
 
 	result = sf.AtLeast(5, 6)
-	if result != float64(6) {
+	if result != (6) {
 		t.Errorf("AtLeast(5, 6) = %v, want 6", result)
 	}
 }

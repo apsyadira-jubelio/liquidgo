@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+	"sync"
 )
 
 var (
@@ -509,51 +510,7 @@ func (bb *BlockBody) renderNodeOptimized(node interface{}, context TagContext, o
 		nodeValue := reflect.ValueOf(node)
 		nodeType := nodeValue.Type()
 
-		// Detect which methods are overridden by checking method counts
-		// Methods with pointer receivers show up on pointer type, value receivers on both
-		hasOwnRender := false
-		hasOwnRTOB := false
-
-		if nodeValue.Kind() == reflect.Ptr {
-			elemType := nodeType.Elem()
-
-			// For pointer receiver methods, check on the pointer type
-			// Compare method counts: if tag has more methods than base, it overrode something
-
-			// Check if this type defines Render (pointer receiver method appears on pointer type)
-			// but NOT on elem type (unless it has value receiver)
-			ptrHasRender := false
-			elemHasRender := false
-
-			if _, ok := nodeType.MethodByName("Render"); ok {
-				ptrHasRender = true
-			}
-			if _, ok := elemType.MethodByName("Render"); ok {
-				elemHasRender = true
-			}
-
-			// Similar check for RenderToOutputBuffer
-			ptrHasRTOB := false
-			elemHasRTOB := false
-
-			if _, ok := nodeType.MethodByName("RenderToOutputBuffer"); ok {
-				ptrHasRTOB = true
-			}
-			if _, ok := elemType.MethodByName("RenderToOutputBuffer"); ok {
-				elemHasRTOB = true
-			}
-
-			// Detect if Render was overridden with pointer receiver
-			// If ptr has it but elem doesn't, AND this isn't *Tag or *Block, it's an override
-			if ptrHasRender && !elemHasRender && nodeType != reflect.TypeOf((*Tag)(nil)) && nodeType != reflect.TypeOf((*Block)(nil)) {
-				hasOwnRender = true
-			}
-
-			// Detect if RenderToOutputBuffer was overridden with pointer receiver
-			if ptrHasRTOB && !elemHasRTOB && nodeType != reflect.TypeOf((*Tag)(nil)) && nodeType != reflect.TypeOf((*Block)(nil)) {
-				hasOwnRTOB = true
-			}
-		}
+		hasOwnRender, hasOwnRTOB := renderOverrides(nodeType)
 
 		// Decision logic from plan:
 		// 1. If tag overrode RenderToOutputBuffer → use it (Pattern 2: CustomTag with Disableable)
@@ -679,4 +636,31 @@ func raiseMissingVariableTerminator(token string, parseContext ParseContextInter
 		err.Err.LineNumber = parseContext.LineNumber()
 	}
 	panic(err)
+}
+
+// renderOverridesCache memoises renderOverrides per node type (bounded by the
+// number of tag types); MethodByName allocates on every call.
+var renderOverridesCache sync.Map // map[reflect.Type][2]bool
+
+// renderOverrides reports whether a node type overrides Render and/or
+// RenderToOutputBuffer with a pointer receiver.
+func renderOverrides(nodeType reflect.Type) (hasOwnRender, hasOwnRTOB bool) {
+	if cached, ok := renderOverridesCache.Load(nodeType); ok {
+		flags := cached.([2]bool)
+		return flags[0], flags[1]
+	}
+	if nodeType.Kind() == reflect.Ptr {
+		elemType := nodeType.Elem()
+		// A pointer-receiver method appears on the pointer type but not on the
+		// elem type; *Tag and *Block are the bases, not overrides.
+		isBase := nodeType == reflect.TypeOf((*Tag)(nil)) || nodeType == reflect.TypeOf((*Block)(nil))
+		_, ptrHasRender := nodeType.MethodByName("Render")
+		_, elemHasRender := elemType.MethodByName("Render")
+		_, ptrHasRTOB := nodeType.MethodByName("RenderToOutputBuffer")
+		_, elemHasRTOB := elemType.MethodByName("RenderToOutputBuffer")
+		hasOwnRender = ptrHasRender && !elemHasRender && !isBase
+		hasOwnRTOB = ptrHasRTOB && !elemHasRTOB && !isBase
+	}
+	renderOverridesCache.Store(nodeType, [2]bool{hasOwnRender, hasOwnRTOB})
+	return hasOwnRender, hasOwnRTOB
 }

@@ -52,6 +52,48 @@ The deferred write of `t.errors` (and the lazy init in `Errors()`) ran without
 `t.mu`, a data race when a cached template/partial renders concurrently.
 Regression test: `liquid/jubelio_race_test.go` (fails under `-race` before).
 
+## 4. Ruby parity fixes found by the storefront-go renderer port
+
+No Ruby was available: expectations are reasoned from Liquid 5.x source
+(and ActiveSupport for `blank?`, which Shopify loads), not run against the
+gem. Each has a regression test in `parity/` that fails before the patch.
+
+| Fix | Ruby semantics | Test |
+|---|---|---|
+| `==` panicked on two maps / two slices (`condition.go` `left == right`) | `==` is structural for Hash/Array (numeric elements across Integer/Float), identity for drops; never raises. Also used by `where`/`find`-style filters' `valuesEqual` | `parity/structural_equality_test.go` |
+| `blank` was false for `[]`, `{}`, `false` | ActiveSupport `blank?`: nil, false, whitespace-only string, empty Array/Hash | `parity/blank_literal_test.go` |
+| `FindVariable` checked environments before the outer scope, so a top-level `assign` could not shadow a global | `find_variable` checks all scopes, then environments; instance assigns are squashed with environments at `Context.new` (already ported). Upstream `TestCustomAssignsSquashInstanceAssigns` re-rendered the assigning template; it now re-parses `{{ foo }}` as Ruby's test does | `parity/assign_shadows_environment_test.go` |
+| `obj[nil]` panicked on non-`map[string]` maps | `hash[nil]` is nil | `parity/nil_key_lookup_test.go` |
+| Lax variable parse took everything before the first `\|` as the name (`a and b` → nil) | `MarkupWithQuotedFragment = /(QuotedFragment)(.*)/om`: name is the first fragment, the rest ignored unless it is a filter | `parity/lax_variable_first_fragment_test.go` |
+| `at_least`/`at_most` returned Float for Integer input (`5000.0`) | `Utils.to_number` keeps Integer. Upstream `TestAtLeast`/`TestAtMost` updated to ints | `parity/at_least_at_most_integer_test.go` |
+| `strip_html` tags regex lacked dotall | `STRIP_HTML_TAGS = /<.*?>/m` | `parity/strip_html_multiline_test.go` |
+
+## 5. Cache per-call reflection on the render path
+
+- `GetInvokableMethods`/`IsInvokable` (drop.go) rebuilt the method+field
+  list via reflection on every lookup, including every map-key miss. Now a
+  name set per `reflect.Type` in a `sync.Map` (bounded by distinct types).
+  `GetInvokableMethods` returns a copy.
+- `renderNodeOptimized` (block_body.go) did four `MethodByName` per tag
+  render to detect `Render` overrides: cached per node type.
+- Filter dispatch (strainer_template.go) did up to two `MethodByName` per
+  filter instance per call: method index cached per (type, filter name);
+  names reaching it are registered filters, so bounded.
+- `strip_html`, `newline_to_br` and i18n interpolation compiled regexes per
+  call: hoisted to package vars.
+- `stringsTitle`/`snakeToCamel` allocate only when they change the string;
+  string-keyed maps skip the reflective int-key path (a `ToInteger` error
+  allocation per miss).
+
+`liquid/jubelio_drop_bench_test.go` (Apple M4, 500 iterations per op):
+
+| | ns/op | B/op | allocs/op |
+|---|---|---|---|
+| `BenchmarkDropLookups` before | 7,315,000 | 7,675,683 | 163,306 |
+| `BenchmarkDropLookups` after | 800,000 | 303,171 | 16,298 |
+| `BenchmarkFilterInvocation` before | 3,610,000 | 6,391,112 | 83,316 |
+| `BenchmarkFilterInvocation` after | 1,450,000 | 618,126 | 35,804 |
+
 ## Known, not patched
 
 - `Template.Render` merges top-level assigns back into the template
@@ -60,5 +102,7 @@ Regression test: `liquid/jubelio_race_test.go` (fails under `-race` before).
 - `Block.RenderToOutputBuffer` (block.go) renders the body up to three times
   via reflection to detect a `Render` override, for tags that do not override
   `RenderToOutputBuffer`. All built-in tags do.
+- `empty` literal is true for nil (Ruby: `nil.respond_to?(:empty?)` is false,
+  so `nil == empty` is falsy).
 - assign regex lacks `(?s)`; `raw` misses `{%- endraw -%}` (worked around in
   `internal/theme/engine`).

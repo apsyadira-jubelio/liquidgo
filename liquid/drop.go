@@ -238,25 +238,37 @@ func (d *Drop) String() string {
 	return reflect.TypeOf(d).String()
 }
 
+// invokableCache memoises the invokable-name set per reflect.Type. Bounded by
+// the number of distinct Go types rendered, so it never needs eviction.
+var invokableCache sync.Map // map[reflect.Type]*invokableSet
+
+type invokableSet struct {
+	list  []string
+	names map[string]struct{}
+}
+
 // IsInvokable checks if a method is invokable on a drop.
 func IsInvokable(drop interface{}, methodName string) bool {
 	if drop == nil {
 		return false
 	}
-	invokableMethods := GetInvokableMethods(drop)
+	set := invokableMethodsFor(reflect.TypeOf(drop))
+	if len(set.names) == 0 {
+		return false
+	}
 	// Check multiple name variants:
 	// 1. Original name (e.g., "Title")
 	// 2. Simple capitalization (e.g., "title" -> "Title")
 	// 3. Snake-to-camel (e.g., "comments_count" -> "CommentsCount")
 	// This supports both Liquid's snake_case and Go's CamelCase conventions
-	capitalizedName := stringsTitle(methodName)
-	camelName := snakeToCamel(methodName)
-	for _, m := range invokableMethods {
-		if m == methodName || m == capitalizedName || m == camelName {
-			return true
-		}
+	if _, ok := set.names[methodName]; ok {
+		return true
 	}
-	return false
+	if _, ok := set.names[stringsTitle(methodName)]; ok {
+		return true
+	}
+	_, ok := set.names[snakeToCamel(methodName)]
+	return ok
 }
 
 // GetInvokableMethods returns a list of invokable methods for a drop.
@@ -264,39 +276,52 @@ func GetInvokableMethods(drop interface{}) []string {
 	if drop == nil {
 		return []string{}
 	}
-	t := reflect.TypeOf(drop)
+	return append([]string(nil), invokableMethodsFor(reflect.TypeOf(drop)).list...)
+}
+
+func invokableMethodsFor(dropType reflect.Type) *invokableSet {
+	if cached, ok := invokableCache.Load(dropType); ok {
+		return cached.(*invokableSet)
+	}
+	list := computeInvokableMethods(dropType)
+	set := &invokableSet{list: list, names: make(map[string]struct{}, len(list))}
+	for _, name := range list {
+		set.names[name] = struct{}{}
+	}
+	actual, _ := invokableCache.LoadOrStore(dropType, set)
+	return actual.(*invokableSet)
+}
+
+// invokableBlacklist lists methods that shouldn't be invokable.
+var invokableBlacklist = map[string]bool{
+	"SetContext":          true,
+	"Context":             true,
+	"InvokeDrop":          true,
+	"Key":                 true,
+	"String":              true,
+	"LiquidMethodMissing": true,
+	"Each":                true,
+	"Increment":           true, // Protected method
+	"Get":                 true, // Prevent recursion via Context.Get
+}
+
+func computeInvokableMethods(t reflect.Type) []string {
 	// Keep pointer type for method lookup
 	if t.Kind() != reflect.Ptr {
 		// If not a pointer, create a pointer type
 		t = reflect.PointerTo(t)
 	}
 
-	// Blacklist of methods that shouldn't be invokable
-	blacklist := map[string]bool{
-		"SetContext":          true,
-		"Context":             true,
-		"InvokeDrop":          true,
-		"Key":                 true,
-		"String":              true,
-		"LiquidMethodMissing": true,
-		"Each":                true,
-		"Increment":           true, // Protected method
-		"Get":                 true, // Prevent recursion via Context.Get
-	}
-
 	var methods []string
 	for i := 0; i < t.NumMethod(); i++ {
 		method := t.Method(i)
-		if !blacklist[method.Name] {
+		if !invokableBlacklist[method.Name] {
 			methods = append(methods, method.Name)
 		}
 	}
 
 	// Also check for exported fields
-	elemType := t
-	if elemType.Kind() == reflect.Ptr {
-		elemType = elemType.Elem()
-	}
+	elemType := t.Elem()
 	if elemType.Kind() == reflect.Struct {
 		for i := 0; i < elemType.NumField(); i++ {
 			field := elemType.Field(i)
@@ -311,18 +336,18 @@ func GetInvokableMethods(drop interface{}) []string {
 
 // strings.Title capitalizes the first letter of a string.
 func stringsTitle(s string) string {
-	if len(s) == 0 {
+	if len(s) == 0 || s[0] < 'a' || s[0] > 'z' {
 		return s
 	}
-	return strings.ToUpper(s[:1]) + s[1:]
+	return string(s[0]-('a'-'A')) + s[1:]
 }
 
 // snakeToCamel converts snake_case to CamelCase.
 // This is used to map Liquid's snake_case property names to Go's CamelCase field names.
 // Examples: "comments_count" -> "CommentsCount", "created_at" -> "CreatedAt"
 func snakeToCamel(s string) string {
-	if len(s) == 0 {
-		return s
+	if !strings.Contains(s, "_") {
+		return stringsTitle(s)
 	}
 
 	parts := strings.Split(s, "_")

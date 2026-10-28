@@ -78,6 +78,14 @@ func (sf *StandardFilters) H(input interface{}) string {
 
 // EscapeOnce escapes a string without changing characters that have already been escaped.
 // escapeOnceEntity matches an already-escaped HTML entity.
+// Compiled once: compiling per call dominated filter cost. Ruby's
+// STRIP_HTML_TAGS is /<.*?>/m, so tags spanning lines are stripped too.
+var (
+	stripHTMLBlocks = regexp.MustCompile(`(?s)<script.*?</script>|<!--.*?-->|<style.*?</style>`)
+	stripHTMLTags   = regexp.MustCompile(`(?s)<.*?>`)
+	newlineRegex    = regexp.MustCompile(`\r?\n`)
+)
+
 var escapeOnceEntity = regexp.MustCompile(`&(?:[a-zA-Z]+|#[0-9]+|#[xX][0-9a-fA-F]+);`)
 
 func (sf *StandardFilters) EscapeOnce(input interface{}) string {
@@ -307,12 +315,8 @@ func (sf *StandardFilters) Rstrip(input interface{}) string {
 func (sf *StandardFilters) StripHTML(input interface{}) string {
 	s := ToS(input, nil)
 
-	// First remove script/style/comment blocks
-	stripHTMLBlocks := regexp.MustCompile(`(?s)<script.*?</script>|<!--.*?-->|<style.*?</style>`)
+	// First remove script/style/comment blocks, then all HTML tags
 	result := stripHTMLBlocks.ReplaceAllString(s, "")
-
-	// Then remove all HTML tags
-	stripHTMLTags := regexp.MustCompile(`<.*?>`)
 	result = stripHTMLTags.ReplaceAllString(result, "")
 
 	return result
@@ -408,8 +412,7 @@ func (sf *StandardFilters) StripNewlines(input interface{}) string {
 func (sf *StandardFilters) NewlineToBr(input interface{}) string {
 	s := ToS(input, nil)
 	// Replace \r\n first to avoid double replacement
-	re := regexp.MustCompile(`\r?\n`)
-	return re.ReplaceAllString(s, "<br />\n")
+	return newlineRegex.ReplaceAllString(s, "<br />\n")
 }
 
 // Replace replaces all occurrences of a substring.
@@ -659,9 +662,9 @@ func (sf *StandardFilters) AtLeast(input interface{}, n interface{}) interface{}
 	resultFloat, _ := ToNumberValue(result)
 
 	if minFloat > resultFloat {
-		return minValue
+		return keepRubyInteger(n, minValue)
 	}
-	return result
+	return keepRubyInteger(input, result)
 }
 
 // AtMost limits a number to a maximum value.
@@ -674,9 +677,9 @@ func (sf *StandardFilters) AtMost(input interface{}, n interface{}) interface{} 
 	resultFloat, _ := ToNumberValue(result)
 
 	if maxFloat < resultFloat {
-		return maxValue
+		return keepRubyInteger(n, maxValue)
 	}
-	return result
+	return keepRubyInteger(input, result)
 }
 
 // Default returns a default value if input is nil, false, or empty.
@@ -1007,6 +1010,15 @@ func isIntLike(v interface{}) bool {
 		return err == nil
 	}
 	return false
+}
+
+// keepRubyInteger undoes ToNumber's float64 normalisation for Integer
+// sources: Ruby's to_number keeps an Integer an Integer.
+func keepRubyInteger(orig, num interface{}) interface{} {
+	if f, ok := num.(float64); ok && isIntLike(orig) {
+		return int(f)
+	}
+	return num
 }
 
 func applyOperation(input, operand interface{}, operation string) interface{} {
@@ -1638,8 +1650,8 @@ func valuesEqual(a, b interface{}) bool {
 		return false
 	}
 
-	// Direct comparison
-	if a == b {
+	// Direct comparison (rubyEqual: a plain == panics on maps/slices)
+	if rubyEqual(a, b) {
 		return true
 	}
 

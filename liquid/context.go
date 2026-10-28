@@ -433,32 +433,22 @@ func (c *Context) FindVariable(key string, raiseOnNotFound bool) interface{} {
 	// Key is already a string
 	keyStr := key
 
-	// Check scopes except the last one (outerScope)
-	// We want to check environments before outerScope so custom assigns override instance assigns
-	scopesToCheck := c.scopes
-	var outerScope map[string]interface{}
-	if len(scopesToCheck) > 0 {
-		outerScope = scopesToCheck[len(scopesToCheck)-1]
-		scopesToCheck = scopesToCheck[:len(scopesToCheck)-1]
-	}
-
-	for _, scope := range scopesToCheck {
+	// Ruby: scopes first (outer scope included), then environments. Instance
+	// assigns in the outer scope were already squashed with environments at
+	// construction (squashInstanceAssignsWithEnvironments).
+	for _, scope := range c.scopes {
 		if _, ok := scope[keyStr]; ok {
 			return c.lookupAndEvaluate(scope, keyStr, raiseOnNotFound)
 		}
 	}
 
-	// Check environments (includes custom assigns which should override instance assigns)
-	variable := c.tryVariableFindInEnvironments(keyStr, raiseOnNotFound)
-	if variable != nil {
+	if variable := c.tryVariableFindInEnvironments(keyStr, raiseOnNotFound); variable != nil {
 		return variable
 	}
 
-	// Check outerScope (instance assigns) last, after environments
-	if outerScope != nil {
-		if _, ok := outerScope[keyStr]; ok {
-			return c.lookupAndEvaluate(outerScope, keyStr, raiseOnNotFound)
-		}
+	var outerScope map[string]interface{}
+	if len(c.scopes) > 0 {
+		outerScope = c.scopes[len(c.scopes)-1]
 	}
 
 	// Check if there's a drop in the outermost scope that can handle this key

@@ -236,7 +236,9 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 
 			// Map access with integer keys (e.g., map[int]interface{})
 			// This handles maps where keys are not strings
-			if v.Kind() == reflect.Map {
+			// String-keyed maps were already tried by tryMapAccess; skipping
+			// them here avoids a ToInteger error allocation on every miss.
+			if v.Kind() == reflect.Map && v.Type().Key().Kind() != reflect.String {
 				// Try integer key first
 				if idx, err := ToInteger(key); err == nil {
 					intKey := reflect.ValueOf(idx)
@@ -248,9 +250,10 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 						}
 					}
 				}
-				// Try key as-is for other map key types
+				// Try key as-is for other map key types (a nil key is never
+				// present: Ruby's hash[nil] is nil)
 				keyValue := reflect.ValueOf(key)
-				if keyValue.Type().ConvertibleTo(v.Type().Key()) {
+				if key != nil && keyValue.Type().ConvertibleTo(v.Type().Key()) {
 					mapValue := v.MapIndex(keyValue.Convert(v.Type().Key()))
 					if mapValue.IsValid() {
 						obj = mapValue.Interface()
