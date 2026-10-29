@@ -5,6 +5,13 @@ import (
 	"strings"
 )
 
+// Emptier is a value that answers Ruby's empty? itself, so `x == empty`
+// asks it instead of checking its Go kind.
+type Emptier interface{ Empty() bool }
+
+// Blanker is a value that answers Ruby's blank? itself.
+type Blanker interface{ Blank() bool }
+
 // MethodLiteral represents a method literal (blank, empty).
 type MethodLiteral struct {
 	MethodName string
@@ -276,6 +283,8 @@ func rubyEqual(left, right interface{}) bool {
 // nil, false, whitespace-only strings and empty arrays/hashes.
 func isBlank(obj interface{}) bool {
 	switch v := obj.(type) {
+	case Blanker:
+		return v.Blank()
 	case nil:
 		return true
 	case bool:
@@ -337,6 +346,11 @@ func checkMethodLiteral(ml *MethodLiteral, obj interface{}) bool {
 	case "blank":
 		return isBlank(obj)
 	case "empty":
+		// Ruby duck typing: a drop answering empty? decides itself (Shopify's
+		// CartDrop is empty when it has no items).
+		if e, ok := obj.(Emptier); ok {
+			return e.Empty()
+		}
 		if str, ok := obj.(string); ok {
 			return str == ""
 		}

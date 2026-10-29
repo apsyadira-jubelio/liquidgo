@@ -108,6 +108,15 @@ before the patch. One upstream test (`TestConditionCheckMethodLiteral`,
 | `nil == empty` was true | `equal_variables`: `right.respond_to?(:empty?) ? right.empty? : nil`; nil/numbers never equal `empty` | `parity/nil_empty_test.go` |
 | `Block.RenderToOutputBuffer` rendered the body three times (reflection on `*Block` always found `Block.Render`), so side effects in custom blocks (`increment`) ran repeatedly | Body renders once; `Render` overrides are dispatched by `renderNodeOptimized` | `parity/block_renders_once_test.go` |
 
+## 7. Drops answer `empty?` / `blank?` themselves
+
+Ruby `Condition` compares `x == empty` / `x == blank` by asking the value
+(`respond_to?(:empty?)`). liquidgo only checked Go kinds, so a drop built on a
+map (Shopify's `cart`, empty when it has no items) was never `empty` and
+Dawn's empty-cart state never rendered. New `Emptier{Empty() bool}` and
+`Blanker{Blank() bool}` interfaces are consulted first. Test:
+`parity/empty_drop_test.go`.
+
 ## Known, not patched
 
 - `Template.Render` merges top-level assigns back into the template
