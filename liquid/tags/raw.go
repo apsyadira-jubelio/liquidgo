@@ -37,41 +37,27 @@ func NewRawTag(tagName, markup string, parseContext liquid.ParseContextInterface
 	}, nil
 }
 
-// Parse parses the raw tag body.
-func (r *RawTag) Parse(tokenizer *liquid.Tokenizer) error {
-	r.body = ""
-	blockDelimiter := r.BlockDelimiter()
+// rawEndTag mirrors Ruby's Raw::FullTokenPossiblyInvalid:
+// /\A(.*)#{TagStart}#{WhitespaceControl}?\s*(\w+)\s*(.*)?#{WhitespaceControl}?#{TagEnd}\z/om
+var rawEndTag = regexp.MustCompile(`(?s)\A(.*)\{%-?\s*(\w+)\s*(.*)?-?%\}\z`)
 
+// Parse parses the raw tag body. As in Ruby, the body is kept verbatim and
+// `-%}` on the end tag trims the text that follows.
+func (r *RawTag) Parse(tokenizer *liquid.Tokenizer) error {
+	var body strings.Builder
 	for {
 		token := tokenizer.Shift()
 		if token == "" {
-			// Tag never closed
+			r.body = body.String()
 			return liquid.NewSyntaxError("Liquid syntax error: " + r.BlockName() + " tag was never closed")
 		}
-
-		// Check if this is the end tag
-		if strings.HasPrefix(token, "{%") && strings.HasSuffix(token, "%}") {
-			// Extract tag name from token
-			// Token format: {% endraw %} or {%- endraw -%}
-			tokenContent := strings.TrimPrefix(token, "{%")
-			tokenContent = strings.TrimSuffix(tokenContent, "%}")
-			tokenContent = strings.TrimSpace(tokenContent)
-
-			// Check if it matches the block delimiter
-			if tokenContent == blockDelimiter || strings.HasPrefix(tokenContent, blockDelimiter+" ") {
-				// This is the end tag
-				// Check for whitespace control
-				if len(token) > 2 && token[2] == '-' {
-					// Trim whitespace from body
-					r.body = strings.TrimRight(r.body, " \t\n\r")
-				}
-				return nil
-			}
+		if m := rawEndTag.FindStringSubmatch(token); m != nil && m[2] == r.BlockDelimiter() {
+			r.ParseContext().SetTrimWhitespace(len(token) >= 3 && token[len(token)-3] == '-')
+			body.WriteString(m[1])
+			r.body = body.String()
+			return nil
 		}
-
-		if token != "" {
-			r.body += token
-		}
+		body.WriteString(token)
 	}
 }
 

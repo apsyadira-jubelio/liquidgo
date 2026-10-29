@@ -30,6 +30,11 @@ func (sf *StandardFilters) Size(input interface{}) interface{} {
 		return len(v)
 	case map[string]interface{}:
 		return len(v)
+	case Eacher:
+		if IsInvokable(v, "size") {
+			return InvokeDropOn(v, "size")
+		}
+		return len(EachToSlice(v))
 	default:
 		// Reflection fallback for typed slices/arrays/maps
 		// This matches Ruby's duck-typing behavior: objects respond to .size
@@ -324,6 +329,9 @@ func (sf *StandardFilters) StripHTML(input interface{}) string {
 
 // First returns the first element of an array.
 func (sf *StandardFilters) First(input interface{}) interface{} {
+	if e, ok := input.(Eacher); ok {
+		input = EachToSlice(e)
+	}
 	if arr, ok := input.([]interface{}); ok && len(arr) > 0 {
 		return arr[0]
 	}
@@ -340,6 +348,9 @@ func (sf *StandardFilters) First(input interface{}) interface{} {
 
 // Last returns the last element of an array.
 func (sf *StandardFilters) Last(input interface{}) interface{} {
+	if e, ok := input.(Eacher); ok {
+		input = EachToSlice(e)
+	}
 	if arr, ok := input.([]interface{}); ok && len(arr) > 0 {
 		return arr[len(arr)-1]
 	}
@@ -359,6 +370,9 @@ func (sf *StandardFilters) Join(input interface{}, separator interface{}) string
 	sep := ", "
 	if separator != nil {
 		sep = ToS(separator, nil)
+	}
+	if e, ok := input.(Eacher); ok {
+		input = EachToSlice(e)
 	}
 
 	if arr, ok := input.([]interface{}); ok {
@@ -736,6 +750,20 @@ func (sf *StandardFilters) Default(input interface{}, defaultValue interface{}, 
 	return input
 }
 
+// Eacher is an enumerable value that is not a slice (a drop such as
+// Shopify's global `collections`): Ruby's Enumerable. Array filters, the
+// size/first/last lookups and `for`/`render ... for` iterate it.
+type Eacher interface {
+	Each(func(interface{}))
+}
+
+// EachToSlice collects an Eacher's items.
+func EachToSlice(e Eacher) []interface{} {
+	items := []interface{}{}
+	e.Each(func(item interface{}) { items = append(items, item) })
+	return items
+}
+
 // InputIterator wraps input for iteration with context support.
 // Mirrors Ruby's InputIterator class from standardfilters.rb:1032-1094
 type InputIterator struct {
@@ -754,6 +782,9 @@ func NewInputIterator(input interface{}, context *Context) *InputIterator {
 		items = flattenArray(arr)
 	} else if m, ok := input.(map[string]interface{}); ok {
 		items = []interface{}{m}
+	} else if e, ok := input.(Eacher); ok {
+		// Ruby: `elsif input.is_a?(Enumerable) then input` (not flattened)
+		items = EachToSlice(e)
 	} else if input != nil {
 		// Reflection fallback for typed slices ([]BlogPost, []string, []int, etc.)
 		// This matches Ruby's duck-typing behavior: arrays respond to iteration

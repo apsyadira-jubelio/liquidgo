@@ -186,6 +186,13 @@ func (r *RenderTag) RenderToOutputBuffer(context liquid.TagContext, output *stri
 			iterable.Each(func(item interface{}) {
 				renderPartialFunc(item, forloop)
 			})
+		} else if e, ok := variable.(liquid.Eacher); ok {
+			// Enumerable without Count (Ruby's Enumerable always has count)
+			items := liquid.EachToSlice(e)
+			forloop := liquid.NewForloopDrop(templateName, len(items), nil)
+			for _, item := range items {
+				renderPartialFunc(item, forloop)
+			}
 		} else if arr, ok := variable.([]interface{}); ok {
 			// Array fallback
 			forloop := liquid.NewForloopDrop(templateName, len(arr), nil)

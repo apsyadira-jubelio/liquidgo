@@ -355,7 +355,8 @@ func checkMethodLiteral(ml *MethodLiteral, obj interface{}) bool {
 				return v.Len() == 0
 			}
 		}
-		return obj == nil || obj == ""
+		// Ruby: nil and other values without empty? never equal `empty`.
+		return false
 	default:
 		return false
 	}

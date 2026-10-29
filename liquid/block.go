@@ -2,7 +2,6 @@ package liquid
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 )
 
@@ -62,47 +61,11 @@ func (b *Block) Render(context TagContext) string {
 	return b.body.Render(context)
 }
 
-// RenderToOutputBuffer renders the block body to the output buffer.
-// If the block has a custom Render method that returns a non-empty string,
-// it uses that instead of rendering the body (for backwards compatibility).
-// This matches Ruby's behavior where Block#render_to_output_buffer calls render
-// if it's been overridden, otherwise renders the body.
+// RenderToOutputBuffer renders the block body once (Ruby's
+// Block#render_to_output_buffer). A Render override on an embedding tag is
+// dispatched by renderNodeOptimized (block_body.go): b here is always the
+// *Block itself, so probing b's Render could only re-render the body.
 func (b *Block) RenderToOutputBuffer(context TagContext, output *strings.Builder) {
-	// Use Tag.RenderToOutputBuffer which calls Render and checks if it returns non-empty
-	// Tag.RenderToOutputBuffer calls t.Render(context). If t is *TestBlockTag,
-	// it will call TestBlockTag.Render, not Block.Render, because Go's method resolution
-	// finds the most specific method.
-	//
-	// But when Block.RenderToOutputBuffer is called, b is *Block, so calling b.Render
-	// will call Block.Render. We need to call Render on the actual type.
-	//
-	// Solution: Use reflection to get the actual type and call its Render method.
-	// The actual type might be *TestBlockTag, which has its own Render method.
-	v := reflect.ValueOf(b)
-	if v.Kind() == reflect.Ptr {
-		// Check if this type has a Render method (it should, since Block has one)
-		// MethodByName will find the most specific Render method for the actual type
-		renderMethod := v.MethodByName("Render")
-		if renderMethod.IsValid() {
-			// Call Render - this will call the most specific Render method for the actual type
-			results := renderMethod.Call([]reflect.Value{reflect.ValueOf(context)})
-			if len(results) > 0 {
-				renderResult := results[0].String()
-				// Get what body would render for comparison
-				bodyResult := ""
-				if b.body != nil {
-					bodyResult = b.body.Render(context)
-				}
-				// If Render returns something different from body, it's been overridden
-				if renderResult != bodyResult {
-					output.WriteString(renderResult)
-					return
-				}
-			}
-		}
-	}
-
-	// No override detected or Render returns same as body, render body
 	if b.body == nil {
 		return
 	}

@@ -94,15 +94,24 @@ gem. Each has a regression test in `parity/` that fails before the patch.
 | `BenchmarkFilterInvocation` before | 3,610,000 | 6,391,112 | 83,316 |
 | `BenchmarkFilterInvocation` after | 1,450,000 | 618,126 | 35,804 |
 
+## 6. Enumerable drops, multi-line assign, raw end tag, `nil == empty`, single block render
+
+Same method as 4 (no Ruby; reasoned from Liquid 5.x source). Each test fails
+before the patch. One upstream test (`TestConditionCheckMethodLiteral`,
+`empty == nil`) updated to Ruby semantics.
+
+| Fix | Ruby semantics | Test |
+|---|---|---|
+| Array filters wrapped a non-slice drop as one item (`collections \| sort: 'title'` saw one element). New `liquid.Eacher` (`Each(func(interface{}))`): `InputIterator` iterates it (sort, sort_natural, map, where, reject, reverse, uniq, compact, concat, sum, find…), `size`/`first`/`last`/`join` filters and `.size`/`.first`/`.last` lookups (unless the drop defines them) materialize it, `render … for` accepts it without `Count()`. `for` already did | `InputIterator#initialize`: `elsif input.is_a?(Enumerable) then input`; VariableLookup sends command methods the object responds to | `parity/enumerable_drop_test.go` |
+| `assign` regex lacked `(?s)`: `{% assign x = a\n \| f %}` was a syntax error (Dawn) | `Assign::Syntax = /…(.*)\s*/om` | `parity/assign_multiline_test.go` |
+| `raw` never closed on `{%- endraw -%}` (compared `"- endraw -"`), trimmed its body on `{%-`, and ignored `-%}` for the following text | `Raw::FullTokenPossiblyInvalid`; body verbatim; `trim_whitespace = token[-3] == '-'` (`raw_tag_test.rb` `test_output_in_raw`) | `parity/raw_whitespace_control_test.go` |
+| `nil == empty` was true | `equal_variables`: `right.respond_to?(:empty?) ? right.empty? : nil`; nil/numbers never equal `empty` | `parity/nil_empty_test.go` |
+| `Block.RenderToOutputBuffer` rendered the body three times (reflection on `*Block` always found `Block.Render`), so side effects in custom blocks (`increment`) ran repeatedly | Body renders once; `Render` overrides are dispatched by `renderNodeOptimized` | `parity/block_renders_once_test.go` |
+
 ## Known, not patched
 
 - `Template.Render` merges top-level assigns back into the template
   (`instanceAssigns`) across renders — Ruby Liquid semantics; callers that
   cache templates should render via `Root()` with a fresh context.
-- `Block.RenderToOutputBuffer` (block.go) renders the body up to three times
-  via reflection to detect a `Render` override, for tags that do not override
-  `RenderToOutputBuffer`. All built-in tags do.
-- `empty` literal is true for nil (Ruby: `nil.respond_to?(:empty?)` is false,
-  so `nil == empty` is falsy).
-- assign regex lacks `(?s)`; `raw` misses `{%- endraw -%}` (worked around in
-  `internal/theme/engine`).
+- `empty`/`blank` comparisons don't call a drop's own `empty?`/`blank?`
+  method (Ruby: `right.send(:empty?)` when it responds).

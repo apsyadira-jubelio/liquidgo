@@ -322,6 +322,24 @@ func (vl *VariableLookup) Evaluate(context *Context) interface{} {
 						}
 					}
 				}
+				// Enumerable drops: Ruby's Enumerable#first/count, unless the
+				// drop defines the method itself.
+				if e, ok := obj.(Eacher); ok && !IsInvokable(obj, keyStr) {
+					items := EachToSlice(e)
+					switch keyStr {
+					case "size":
+						obj = len(items)
+						continue
+					case "first", "last":
+						if len(items) > 0 {
+							obj = items[0]
+							if keyStr == "last" {
+								obj = items[len(items)-1]
+							}
+							continue
+						}
+					}
+				}
 				// Command methods for strings
 				if str, ok := obj.(string); ok {
 					switch keyStr {

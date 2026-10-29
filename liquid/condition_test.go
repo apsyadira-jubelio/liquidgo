@@ -358,9 +358,9 @@ func TestConditionCheckMethodLiteral(t *testing.T) {
 			t.Error("Expected empty == {key:value} to be false")
 		}
 
-		// Test empty with nil
-		if !checkMethodLiteral(ml, nil) {
-			t.Error("Expected empty == nil to be true")
+		// Test empty with nil (Ruby: nil does not respond to empty?)
+		if checkMethodLiteral(ml, nil) {
+			t.Error("Expected empty == nil to be false")
 		}
 	}
 
