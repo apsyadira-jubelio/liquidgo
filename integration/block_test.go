@@ -106,3 +106,10 @@ func (t *TestBlockTag2) Render(ctx liquid.TagContext) string {
 	// So result is "foo" + "hello" + "bar" = "foohellobar"
 	return "foo" + t.TestBlockTag.Render(ctx) + "bar"
 }
+
+// Shopify accepts blank lines and free text inside comment...endcomment within
+// a {% liquid %} tag (Horizon's snippets/layout-panel-style.liquid does this).
+func TestLiquidTagCommentWithBlankLines(t *testing.T) {
+	template := "{%- liquid\n  comment\n    Intended for blocks.\n\n    Accepts:\n      settings: {block.settings}\n  endcomment\n\n  assign x = 'ok'\n-%}{{ x }}"
+	assertTemplateResult(t, "ok", template, nil)
+}

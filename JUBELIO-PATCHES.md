@@ -117,6 +117,15 @@ Dawn's empty-cart state never rendered. New `Emptier{Empty() bool}` and
 `Blanker{Blank() bool}` interfaces are consulted first. Test:
 `parity/empty_drop_test.go`.
 
+## 8. `comment` inside `{% liquid %}` survives blank lines
+
+In liquid-tag mode the tokenizer yields "" for a blank line, and
+`CommentTag.Parse` treated "" as EOF, so a multi-paragraph comment
+(Shopify Horizon's `snippets/layout-panel-style.liquid`) raised
+"'comment' tag was never closed". The loop now stops only when
+`Tokenizer.Exhausted()`. Test: `integration/block_test.go`
+`TestLiquidTagCommentWithBlankLines`.
+
 ## Known, not patched
 
 - `Template.Render` merges top-level assigns back into the template

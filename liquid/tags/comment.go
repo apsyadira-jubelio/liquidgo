@@ -60,7 +60,11 @@ func (c *CommentTag) Parse(tokenizer *liquid.Tokenizer) error {
 	for {
 		token := tokenizer.Shift()
 		if token == "" {
-			break
+			// "" is also a blank line inside {% liquid %}; only EOF ends the loop.
+			if tokenizer.Exhausted() {
+				break
+			}
+			continue
 		}
 
 		// Extract tag name from token
@@ -118,7 +122,10 @@ func (c *CommentTag) parseRawTagBody(tokenizer *liquid.Tokenizer) error {
 	for {
 		token := tokenizer.Shift()
 		if token == "" {
-			break
+			if tokenizer.Exhausted() {
+				break
+			}
+			continue
 		}
 
 		// Check for endraw
